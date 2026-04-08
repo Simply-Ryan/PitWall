@@ -1,12 +1,26 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Provider } from 'react-redux';
 import { store } from '@redux/store';
-import { HomeScreen } from '@screens/HomeScreen';
+import { HomeScreen, DashboardScreen } from '@screens';
 
-const Stack = createNativeStackNavigator();
+/**
+ * Navigation stack parameter list
+ * Defines all available screens and their parameters
+ */
+export type RootStackParamList = {
+  Home: undefined;
+  Dashboard: undefined;
+};
+
+/**
+ * Type-safe navigation prop
+ */
+export type RootNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
  * Root application component
@@ -36,7 +50,11 @@ export const App: React.FC = () => {
             component={HomeScreen}
             options={{ animationEnabled: false }}
           />
-          {/* Additional screens will be added during Phase 2 */}
+          <Stack.Screen
+            name="Dashboard"
+            component={DashboardScreen}
+            options={{ animationEnabled: false }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
