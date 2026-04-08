@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../middleware/auth';
@@ -9,7 +9,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // POST /api/auth/register - Register new user
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, email, password } = req.body;
 
@@ -65,7 +65,7 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/login - Login user
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { username, password } = req.body;
 

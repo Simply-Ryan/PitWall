@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // GET /api/sessions/:id/analytics - Detailed session analytics
-router.get('/:id/analytics', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/:id/analytics', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -47,9 +47,9 @@ router.get('/:id/analytics', authMiddleware, async (req: AuthRequest, res, next)
     const maxSpeed = speeds.length ? Math.max(...speeds) : 0;
     const avgSpeed = speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
 
-    const engineTemps = telemetry.map(t => t.engineTemp);
-    const maxEngineTemp = engineTemps.length ? Math.max(...engineTemps) : 0;
-    const avgEngineTemp = engineTemps.length ? engineTemps.reduce((a, b) => a + b, 0) / engineTemps.length : 0;
+    const tireTemps = telemetry.flatMap(t => [t.tireTemp1, t.tireTemp2, t.tireTemp3, t.tireTemp4]).filter(t => t);
+    const maxTireTemp = tireTemps.length ? Math.max(...tireTemps) : 0;
+    const avgTireTemp = tireTemps.length ? tireTemps.reduce((a, b) => a + b, 0) / tireTemps.length : 0;
 
     // Sector analysis
     const sectorTimes = {
@@ -91,22 +91,22 @@ router.get('/:id/analytics', authMiddleware, async (req: AuthRequest, res, next)
         averageLap: avgLap,
         improvement: bestLap - avgLap,
         consistency,
-        personalBests: laps.filter(l => l.personalBest).length,
+        personalBests: laps.filter(l => l.bestLapTime === 1).length,
       },
       speed: {
         maxSpeed,
         averageSpeed: avgSpeed,
-        speedRange: maxSpeed - Math.min(...speeds),
+        speedRange: maxSpeed - (speeds.length ? Math.min(...speeds) : 0),
       },
       temperature: {
-        maxEngineTemp,
-        averageEngineTemp: avgEngineTemp,
-        engineTempRange: maxEngineTemp - Math.min(...engineTemps),
+        maxTireTemp,
+        averageTireTemp: avgTireTemp,
+        tireTempRange: tireTemps.length ? maxTireTemp - Math.min(...tireTemps) : 0,
       },
       sectors: sectorAnalysis,
       fuel: {
-        totalConsumed: laps.reduce((sum, l) => sum + (l.fuelConsumed || 0), 0),
-        averagePerLap: laps.reduce((sum, l) => sum + (l.fuelConsumed || 0), 0) / laps.length,
+        totalConsumed: laps.reduce((sum, l) => sum + (l.fuel || 0), 0),
+        averagePerLap: laps.length > 0 ? laps.reduce((sum, l) => sum + (l.fuel || 0), 0) / laps.length : 0,
       },
       telemetryDataPoints: telemetry.length,
     });
@@ -116,7 +116,7 @@ router.get('/:id/analytics', authMiddleware, async (req: AuthRequest, res, next)
 });
 
 // GET /api/sessions/:id/lap-comparison - Compare specific laps
-router.get('/:id/lap-comparison', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/:id/lap-comparison', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { lap1, lap2 } = req.query;
@@ -154,7 +154,7 @@ router.get('/:id/lap-comparison', authMiddleware, async (req: AuthRequest, res, 
           sector2: lapN1.sector2,
           sector3: lapN1.sector3,
           maxSpeed: lapN1.maxSpeed,
-          personalBest: lapN1.personalBest,
+          isPersonalBest: lapN1.bestLapTime === 1,
         },
         lap2: {
           lapNumber: lapN2.lapNumber,
@@ -163,7 +163,7 @@ router.get('/:id/lap-comparison', authMiddleware, async (req: AuthRequest, res, 
           sector2: lapN2.sector2,
           sector3: lapN2.sector3,
           maxSpeed: lapN2.maxSpeed,
-          personalBest: lapN2.personalBest,
+          isPersonalBest: lapN2.bestLapTime === 1,
         },
         differences: {
           timeDiff: lapN2.lapTime - lapN1.lapTime,
@@ -181,13 +181,13 @@ router.get('/:id/lap-comparison', authMiddleware, async (req: AuthRequest, res, 
 });
 
 // GET /api/sessions/:id/telemetry-export - Export telemetry as CSV
-router.get('/:id/telemetry-export', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/:id/telemetry-export', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
 
     const session = await prisma.session.findUnique({
       where: { id },
-      include: { telemetry: { orderBy: { time: 'asc' } } },
+      include: { telemetry: { orderBy: { timestamp: 'asc' } } },
     });
 
     if (!session) {
@@ -206,55 +206,61 @@ router.get('/:id/telemetry-export', authMiddleware, async (req: AuthRequest, res
 
     // CSV Headers
     const headers = [
-      'Time',
+      'Timestamp',
       'Speed',
       'RPM',
+      'Gear',
       'Throttle',
       'Brake',
       'Clutch',
-      'Engine Temp',
-      'Fuel Level',
-      'Tire Wear FL',
-      'Tire Wear FR',
-      'Tire Wear RL',
-      'Tire Wear RR',
-      'Tire Temp FL',
-      'Tire Temp FR',
-      'Tire Temp RL',
-      'Tire Temp RR',
-      'Brake Temp FL',
-      'Brake Temp FR',
-      'Brake Temp RL',
-      'Brake Temp RR',
-      'Weather',
-      'Track Temp',
-      'Lap Number',
+      'Steering',
+      'Fuel',
+      'Tire1_Temp',
+      'Tire2_Temp',
+      'Tire3_Temp',
+      'Tire4_Temp',
+      'Tire1_Pressure',
+      'Tire2_Pressure',
+      'Tire3_Pressure',
+      'Tire4_Pressure',
+      'Tire1_Wear',
+      'Tire2_Wear',
+      'Tire3_Wear',
+      'Tire4_Wear',
+      'Lateral_G',
+      'Longitudinal_G',
+      'Vertical_G',
+      'Air_Temp',
+      'Road_Temp',
     ];
 
     const rows = telemetry.map(t => [
-      t.time.toISOString(),
-      t.speed.toFixed(2),
-      t.rpm.toFixed(0),
-      t.throttle.toFixed(1),
-      t.brake.toFixed(1),
-      t.clutch.toFixed(1),
-      t.engineTemp.toFixed(1),
-      t.fuelLevel.toFixed(1),
-      t.tireWearFL.toFixed(1),
-      t.tireWearFR.toFixed(1),
-      t.tireWearRL.toFixed(1),
-      t.tireWearRR.toFixed(1),
-      t.tireTempFL.toFixed(1),
-      t.tireTempFR.toFixed(1),
-      t.tireTempRL.toFixed(1),
-      t.tireTempRR.toFixed(1),
-      t.brakeTempFL.toFixed(1),
-      t.brakeTempFR.toFixed(1),
-      t.brakeTempRL.toFixed(1),
-      t.brakeTempRR.toFixed(1),
-      t.weather,
-      t.trackTemp.toFixed(1),
-      t.lapNumber,
+      t.timestamp.toISOString(),
+      (t.speed || 0).toFixed(2),
+      (t.rpm || 0).toFixed(0),
+      t.gear || 0,
+      (t.throttle || 0).toFixed(2),
+      (t.brake || 0).toFixed(2),
+      (t.clutch || 0).toFixed(2),
+      (t.steering || 0).toFixed(2),
+      (t.fuel || 0).toFixed(1),
+      (t.tireTemp1 || 0).toFixed(1),
+      (t.tireTemp2 || 0).toFixed(1),
+      (t.tireTemp3 || 0).toFixed(1),
+      (t.tireTemp4 || 0).toFixed(1),
+      (t.tirePressure1 || 0).toFixed(1),
+      (t.tirePressure2 || 0).toFixed(1),
+      (t.tirePressure3 || 0).toFixed(1),
+      (t.tirePressure4 || 0).toFixed(1),
+      (t.tireWear1 || 0).toFixed(1),
+      (t.tireWear2 || 0).toFixed(1),
+      (t.tireWear3 || 0).toFixed(1),
+      (t.tireWear4 || 0).toFixed(1),
+      (t.lateralG || 0).toFixed(2),
+      (t.longitudinalG || 0).toFixed(2),
+      (t.verticalG || 0).toFixed(2),
+      (t.airTemp || 0).toFixed(1),
+      (t.roadTemp || 0).toFixed(1),
     ]);
 
     const csv = [
@@ -295,26 +301,27 @@ router.get('/:id/weather-history', authMiddleware, async (req: AuthRequest, res,
 
     const telemetry = session.telemetry || [];
 
-    // Group by weather condition
-    const weatherGroups: { [key: string]: any[] } = {};
+    // Group by temperature ranges (simple weather proxy)
+    const tempGroups: { [key: string]: any[] } = {};
     telemetry.forEach(t => {
-      if (!weatherGroups[t.weather]) {
-        weatherGroups[t.weather] = [];
+      const tempRange = t.roadTemp >= 20 ? 'Warm' : t.roadTemp >= 10 ? 'Mild' : 'Cold';
+      if (!tempGroups[tempRange]) {
+        tempGroups[tempRange] = [];
       }
-      weatherGroups[t.weather].push(t);
+      tempGroups[tempRange].push(t);
     });
 
-    const weatherHistory = Object.entries(weatherGroups).map(([weather, data]) => {
-      const avgTemp = data.reduce((sum, t) => sum + t.trackTemp, 0) / data.length;
-      const avgSpeed = data.reduce((sum, t) => sum + t.speed, 0) / data.length;
+    const weatherHistory = Object.entries(tempGroups).map(([condition, data]) => {
+      const avgTemp = data.reduce((sum, t) => sum + (t.roadTemp || 0), 0) / data.length;
+      const avgSpeed = data.reduce((sum, t) => sum + (t.speed || 0), 0) / data.length;
 
       return {
-        weather,
+        condition,
         duration: data.length, // Approximate time in data points
-        averageTrackTemp: avgTemp.toFixed(1),
+        averageRoadTemp: avgTemp.toFixed(1),
         averageSpeed: avgSpeed.toFixed(1),
-        startTime: data[0].time,
-        endTime: data[data.length - 1].time,
+        startTime: data[0].timestamp,
+        endTime: data[data.length - 1].timestamp,
       };
     });
 
@@ -332,7 +339,7 @@ router.get('/:id/weather-history', authMiddleware, async (req: AuthRequest, res,
 });
 
 // GET /api/sessions/driver-trends - Historical performance trends
-router.get('/trends/driver-performance', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/trends/driver-performance', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const sessions = await prisma.session.findMany({
       where: { userId: req.userId },
@@ -357,7 +364,7 @@ router.get('/trends/driver-performance', authMiddleware, async (req: AuthRequest
         avgLap: lapTimes.reduce((a, b) => a + b, 0) / lapTimes.length,
         totalLaps: laps.length,
         improvement: Math.min(...lapTimes) - lapTimes[lapTimes.length - 1],
-        personalBests: laps.filter(l => l.personalBest).length,
+        personalBests: laps.filter(l => l.bestLapTime === 1).length,
       };
     });
 

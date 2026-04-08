@@ -80,33 +80,32 @@ async function main() {
     for (let i = 0; i < 100; i++) {
       telemetryDataArray.push({
         sessionId: session.id,
+        timestamp: new Date(session.startTime.getTime() + i * 60000),
         speed: Math.random() * 300,
-        rpm: Math.random() * 9000,
-        throttle: Math.random() * 100,
-        brake: Math.random() * 100,
-        clutch: Math.random() * 100,
-        engineTemp: 80 + Math.random() * 40,
-        fuelLevel: Math.random() * 100,
-        tireWearFL: Math.random() * 100,
-        tireWearFR: Math.random() * 100,
-        tireWearRL: Math.random() * 100,
-        tireWearRR: Math.random() * 100,
-        tirePressureFL: 25 + Math.random() * 5,
-        tirePressureFR: 25 + Math.random() * 5,
-        tirePressureRL: 26 + Math.random() * 5,
-        tirePressureRR: 26 + Math.random() * 5,
-        tireTempFL: 60 + Math.random() * 40,
-        tireTempFR: 60 + Math.random() * 40,
-        tireTempRL: 60 + Math.random() * 40,
-        tireTempRR: 60 + Math.random() * 40,
-        brakeTempFL: 200 + Math.random() * 300,
-        brakeTempFR: 200 + Math.random() * 300,
-        brakeTempRL: 150 + Math.random() * 250,
-        brakeTempRR: 150 + Math.random() * 250,
-        weather: ['clear', 'rain', 'cloudy'][Math.floor(Math.random() * 3)],
-        trackTemp: 20 + Math.random() * 40,
-        lapNumber: Math.floor(i / 10) + 1,
-        time: new Date(session.startTime.getTime() + i * 60000),
+        rpm: Math.floor(Math.random() * 9000),
+        gear: Math.floor(Math.random() * 8),
+        throttle: Math.random(),
+        brake: Math.random(),
+        clutch: Math.random(),
+        steering: (Math.random() - 0.5) * 2,
+        fuel: Math.random() * 100,
+        tireTemp1: 60 + Math.random() * 40,
+        tireTemp2: 60 + Math.random() * 40,
+        tireTemp3: 60 + Math.random() * 40,
+        tireTemp4: 60 + Math.random() * 40,
+        tirePressure1: 25 + Math.random() * 5,
+        tirePressure2: 25 + Math.random() * 5,
+        tirePressure3: 26 + Math.random() * 5,
+        tirePressure4: 26 + Math.random() * 5,
+        tireWear1: Math.random(),
+        tireWear2: Math.random(),
+        tireWear3: Math.random(),
+        tireWear4: Math.random(),
+        lateralG: (Math.random() - 0.5) * 2,
+        longitudinalG: (Math.random() - 0.5) * 2,
+        verticalG: 0.9 + Math.random() * 0.2,
+        airTemp: 20 + Math.random() * 20,
+        roadTemp: 20 + Math.random() * 30,
       });
     }
 
@@ -123,7 +122,9 @@ async function main() {
   let lapCount = 0;
   for (const { session, user } of sessions) {
     for (let lapNum = 1; lapNum <= 5; lapNum++) {
-      const lapTime = 90 + Math.random() * 10;
+      const lapTime = 90000 + Math.random() * 10000; // milliseconds
+
+      const isBestLap = lapNum === 1 || Math.random() > 0.7 ? 1 : 0;
 
       const lap = await prisma.lap.create({
         data: {
@@ -131,28 +132,22 @@ async function main() {
           sessionId: session.id,
           lapNumber: lapNum,
           lapTime,
-          sector1: lapTime * 0.33 + (Math.random() - 0.5),
-          sector2: lapTime * 0.33 + (Math.random() - 0.5),
-          sector3: lapTime * 0.34 + (Math.random() - 0.5),
+          sector1: lapTime * 0.33 + (Math.random() - 0.5) * 1000,
+          sector2: lapTime * 0.33 + (Math.random() - 0.5) * 1000,
+          sector3: lapTime * 0.34 + (Math.random() - 0.5) * 1000,
           maxSpeed: 280 + Math.random() * 20,
           avgSpeed: 200 + Math.random() * 30,
-          fuelConsumed: 2 + Math.random() * 2,
+          fuel: 2 + Math.random() * 2,
           weather: session.name.includes('Spa') ? 'rain' : 'clear',
-          trackTemp: 25 + Math.random() * 20,
-          personalBest: lapNum === 1 || Math.random() > 0.7,
-          setup: {
-            frontWing: 10,
-            rearWing: 8,
-            brakeBias: 55,
-            tractionControl: 5,
-          },
+          trackCondition: 'dry',
+          bestLapTime: isBestLap,
         },
       });
 
       lapCount++;
 
       // Create leaderboard entry if personal best
-      if (lap.personalBest) {
+      if (isBestLap === 1) {
         await prisma.leaderboardEntry.upsert({
           where: {
             userId_track_simulator: {
@@ -162,7 +157,7 @@ async function main() {
             },
           },
           update: {
-            bestLapTime: Math.min(lap.lapTime, Math.random() * 150),
+            bestLapTime: Math.min(lap.lapTime, Math.random() * 150000),
           },
           create: {
             userId: user.id,
@@ -186,19 +181,20 @@ async function main() {
     if (laps.length > 0) {
       const lapTimes = laps.map(l => l.lapTime);
       const bestLap = Math.min(...lapTimes);
-      const avgLap = lapTimes.reduce((a, b) => a + b, 0) / lapTimes.length;
+      const speeds = laps.map(l => l.maxSpeed || 0).filter(s => s > 0);
+      const maxSpeed = speeds.length > 0 ? Math.max(...speeds) : 0;
+      const avgSpeed = speeds.length > 0 ? speeds.reduce((a, b) => a + b, 0) / speeds.length : 0;
 
       await prisma.sessionStatistics.create({
         data: {
           sessionId: session.id,
           totalLaps: laps.length,
           bestLapTime: bestLap,
-          averageLapTime: avgLap,
-          totalDrivingTime: laps.length * 90, // Approximate
-          maxSpeed: 300,
-          averageSpeed: 200,
-          fuelConsumed: laps.length * 2.5,
-          weather: 'mixed',
+          maxSpeed,
+          avgSpeed,
+          totalFuelUsed: laps.reduce((sum, l) => sum + (l.fuel || 0), 0),
+          avgTireTemp: 60 + Math.random() * 40,
+          maxTireTemp: 90 + Math.random() * 20,
         },
       });
 

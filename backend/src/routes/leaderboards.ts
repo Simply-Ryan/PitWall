@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { ValidationError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // GET /api/leaderboards/global - Global leaderboard
-router.get('/global', async (req, res) => {
+router.get('/global', async (req, res, next: NextFunction) => {
   try {
     const { track, simulator, limit = 100 } = req.query;
 
@@ -42,7 +42,7 @@ router.get('/global', async (req, res) => {
 });
 
 // GET /api/leaderboards/personal - Personal best laps
-router.get('/personal', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/personal', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const bestLaps = await prisma.lap.findMany({
       where: { userId: req.userId },
@@ -69,7 +69,7 @@ router.get('/personal', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // GET /api/leaderboards/track/:track - Leaderboard for specific track
-router.get('/track/:track', async (req, res) => {
+router.get('/track/:track', async (req, res, next: NextFunction) => {
   try {
     const { track } = req.params;
     const { simulator = 'all', limit = 50 } = req.query;
@@ -111,7 +111,7 @@ router.get('/track/:track', async (req, res) => {
 });
 
 // POST /api/leaderboards/update - Update leaderboard entries (admin only)
-router.post('/update', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/update', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     // Get all users' best laps grouped by track and simulator
     const bestLaps = await prisma.lap.findMany({

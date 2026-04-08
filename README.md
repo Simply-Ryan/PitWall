@@ -24,32 +24,58 @@
 ## 🚀 Quick Start
 
 ### For End Users
-1. Download the latest PitWall release from the [Releases](https://github.com/yourusername/PitWall/releases) page
-2. Run the Windows installer (`PitWall-Setup.exe`)
-3. Launch the PitWall app on your mobile device or browser
-4. Connect to your simracing hardware and start collecting telemetry
+1. **[📖 READ FULL SETUP GUIDE](./INSTALL_AND_SETUP.md)** - Complete step-by-step installation (15-20 min)
+2. Download the latest PitWall release from the [Releases](https://github.com/yourusername/PitWall/releases) page
+3. Run the Windows installer (`PitWall-Setup.exe`) or follow the setup guide
+4. Launch the PitWall app on your mobile device or browser
+5. Connect to your simracing hardware and start collecting telemetry
+
+### Quick Start Scripts
+
+**Windows:**
+```bash
+# Run the automated setup script
+setup.bat
+```
+
+**macOS/Linux:**
+```bash
+# Run the automated setup script
+chmod +x setup.sh
+./setup.sh
+```
 
 ### For Developers
+
+**Prerequisites:** Node.js 18+, PostgreSQL 14+, Git
+
 ```bash
-# Clone the repository
+# Clone and setup
 git clone https://github.com/yourusername/PitWall.git
 cd PitWall
 
-# Install dependencies for all components
-cd frontend && npm install
-cd ../backend && npm install
-cd ../telemetry-bridge && dotnet restore
+# Option 1: Automated setup (recommended)
+./setup.sh        # macOS/Linux
+# OR
+setup.bat         # Windows
 
-# Run tests
-npm run test:frontend
-npm run test:backend
-dotnet test telemetry-bridge/
+# Option 2: Manual setup (see INSTALL_AND_SETUP.md)
+npm install       # Install dependencies
+npx prisma migrate dev --name init  # Setup database
+npm run seed      # Optional: Add test data
 
 # Start development servers
-npm run dev:frontend
-npm run dev:backend
-dotnet run --project telemetry-bridge/
+# Terminal 1 - Backend
+cd backend && npm run dev
+
+# Terminal 2 - Frontend  
+cd frontend && npm run web
 ```
+
+**Access the app:**
+- Frontend: http://localhost:5173 (or shown in terminal)
+- Backend: http://localhost:3000
+- API Docs: http://localhost:3000/api/docs (when backend running)
 
 ---
 

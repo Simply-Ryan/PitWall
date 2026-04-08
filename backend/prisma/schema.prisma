@@ -1,5 +1,5 @@
-// This schema will be expanded during Phase 2 and 3
-// Current setup provides foundation for telemetry storage
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,99 +10,169 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model - Phase 4
+// User model for authentication
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  username  String     @unique
+  email     String     @unique
   password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sessions Session[]
-
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  
+  sessions  Session[]
+  laps      Lap[]
+  leaderboardEntries LeaderboardEntry[]
+  
   @@map("users")
 }
 
-// Session model - Phase 2-3
+// Session model for recording telemetry sessions
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  name      String
-  game      String   @db.VarChar(50)
-  track     String?
-  startTime DateTime
-  endTime   DateTime?
-  duration  Int?     // in seconds
+  name            String
+  track           String
+  simulator       String     // iRacing, ACC, AC, F1-24, F1-25
+  startTime       DateTime   @default(now())
+  endTime         DateTime?
+  duration        Int?       // in seconds
   
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  telemetry Telemetry[]
-
+  recordedAt      DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  telemetry       Telemetry[]
+  laps            Lap[]
+  
   @@index([userId])
-  @@index([startTime])
+  @@index([track])
+  @@index([simulator])
   @@map("sessions")
 }
 
-// Telemetry model - Phase 2-3
+// Raw telemetry data points
 model Telemetry {
-  id          String   @id @default(cuid())
-  sessionId   String
-  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id              String     @id @default(cuid())
+  sessionId       String
+  session         Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   
-  timestamp   DateTime
-  lapNumber   Int
+  timestamp       DateTime
+  speed           Float      // km/h
+  rpm             Int
+  gear            Int
+  throttle        Float      // 0-1
+  brake           Float      // 0-1
+  clutch          Float      // 0-1
+  steering        Float      // -1 to 1 (radians)
+  fuel            Float      // liters
   
-  // Vehicle data
-  gear        Int
-  rpm         Int
-  speed       Float
-  throttle    Float    @db.Decimal(5, 4)
-  brake       Float    @db.Decimal(5, 4)
-  steering    Float    @db.Decimal(5, 4)
+  // Tire data (FL, FR, RL, RR)
+  tireTemp1       Float
+  tireTemp2       Float
+  tireTemp3       Float
+  tireTemp4       Float
   
-  // Fuel
-  fuelLevel   Float
-  fuelUsed    Float?
+  tirePressure1   Float      // kPa
+  tirePressure2   Float
+  tirePressure3   Float
+  tirePressure4   Float
   
-  // Tires
-  tireTemp    Json?    // { FL: [in, mid, out], FR: [...], etc }
-  tireWear    Json?    // { FL: pct, FR: pct, etc }
+  tireWear1       Float      // 0-1
+  tireWear2       Float
+  tireWear3       Float
+  tireWear4       Float
   
-  // Performance
-  deltaToLap  Float?
-  lapTime     Float?
+  // Performance data
+  lateralG        Float
+  longitudinalG   Float
+  verticalG       Float
   
-  // Environmental
-  airTemp     Float?
-  trackTemp   Float?
-  weather     String   @db.VarChar(50)
+  // Environment
+  airTemp         Float      // Celsius
+  roadTemp        Float      // Celsius
   
-  // Raw data for analysis
-  rawData     Json?
+  createdAt       DateTime   @default(now())
   
-  createdAt   DateTime @default(now())
-
   @@index([sessionId])
   @@index([timestamp])
-  @@index([lapNumber])
   @@map("telemetry")
 }
 
-// Analysis model - Phase 3
-model SessionAnalysis {
-  id          String   @id @default(cuid())
-  sessionId   String   @unique
+// Lap data
+model Lap {
+  id              String     @id @default(cuid())
+  sessionId       String
+  session         Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   
-  insights    Json?    // Array of AI insights
-  score       Float?   // Performance score 0-100
-  degradation Json?    // Tire degradation analysis
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  lapNumber       Int
+  sector1         Float?     // milliseconds
+  sector2         Float?
+  sector3         Float?
+  lapTime         Float      // milliseconds
+  bestLapTime     Int        // 0 = not best lap
+  
+  fuel            Float?     // liters remaining
+  avgSpeed        Float?
+  maxSpeed        Float?
+  
+  trackCondition  String?    // Wet, Dry, etc.
+  weather         String?    // Rainy, Sunny, etc.
+  
+  isValid         Boolean    @default(true)
+  
+  createdAt       DateTime   @default(now())
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([lapTime])
+  @@map("laps")
+}
 
-  @@map("session_analyses")
+// Leaderboard entries for ranking
+model LeaderboardEntry {
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  track           String
+  simulator       String
+  
+  bestLapTime     Float      // milliseconds
+  lapCount        Int        @default(1)
+  totalSessions   Int        @default(1)
+  
+  rank            Int
+  points          Int        @default(0)
+  
+  lastUpdated     DateTime   @updatedAt
+  createdAt       DateTime   @default(now())
+  
+  @@unique([userId, track, simulator])
+  @@index([track])
+  @@index([simulator])
+  @@index([rank])
+  @@map("leaderboard_entries")
+}
+
+// Session statistics (denormalized for performance)
+model SessionStatistics {
+  id              String     @id @default(cuid())
+  sessionId       String     @unique
+  
+  totalLaps       Int
+  bestLapTime     Float?
+  avgSpeed        Float?
+  maxSpeed        Float?
+  totalFuelUsed   Float?
+  avgTireTemp     Float?
+  maxTireTemp     Float?
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@map("session_statistics")
 }

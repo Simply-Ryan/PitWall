@@ -3,7 +3,7 @@
 ## 🎉 Completion Status
 
 ✅ **Phase 2 Week 1-2 Backend API: COMPLETE**  
-📦 **Pushed to GitHub**: https://github.com/Simply-Ryan/PiWall.git (Commit: 27a1196)  
+📦 **Pushed to GitHub**: https://github.com/Simply-Ryan/PitWall.git (Commit: 27a1196)  
 🚀 **Ready for**: Phase 2 Week 3 (Frontend + WebSocket Integration)
 
 ---

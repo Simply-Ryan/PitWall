@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // POST /api/laps - Record lap completion
-router.post('/', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const {
       sessionId,
@@ -82,7 +82,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // GET /api/laps - Get user's laps (paginated)
-router.get('/', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { sessionId, track, limit = 50, offset = 0 } = req.query;
 
@@ -115,7 +115,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // GET /api/laps/session/:sessionId - Get laps for a session
-router.get('/session/:sessionId', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/:sessionId', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { sessionId } = req.params;
 

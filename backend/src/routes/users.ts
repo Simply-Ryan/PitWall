@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // GET /api/users/profile - Get current user profile
-router.get('/profile', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/profile', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
@@ -32,7 +32,7 @@ router.get('/profile', authMiddleware, async (req: AuthRequest, res, next) => {
 });
 
 // PATCH /api/users/profile - Update user profile
-router.patch('/profile', authMiddleware, async (req: AuthRequest, res, next) => {
+router.patch('/profile', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { username } = req.body;
 
@@ -60,7 +60,7 @@ router.patch('/profile', authMiddleware, async (req: AuthRequest, res, next) => 
 });
 
 // GET /api/users/stats - Get user statistics
-router.get('/stats', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/stats', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     // Total sessions
     const sessions = await prisma.session.findMany({
@@ -108,7 +108,7 @@ router.get('/stats', authMiddleware, async (req: AuthRequest, res, next) => {
 });
 
 // GET /api/users/leaderboard-position - Get user's positions on leaderboards
-router.get('/leaderboard-position', authMiddleware, async (req: AuthRequest, res, next) => {
+router.get('/leaderboard-position', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const leaderboards = await prisma.leaderboardEntry.findMany({
       where: { userId: req.userId },

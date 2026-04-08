@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // GET /api/sessions - Get all sessions for user
-router.get('/', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { track, simulator } = req.query;
 
@@ -34,7 +34,7 @@ router.get('/', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // POST /api/sessions - Create new session
-router.post('/', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { name, track, simulator } = req.body;
 
@@ -60,7 +60,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // GET /api/sessions/:id - Get session details
-router.get('/:id', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/:id', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
 
@@ -87,7 +87,7 @@ router.get('/:id', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // PATCH /api/sessions/:id - Update session
-router.patch('/:id', authMiddleware, async (req: AuthRequest, res) => {
+router.patch('/:id', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { name, endTime } = req.body;
@@ -118,7 +118,7 @@ router.patch('/:id', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // DELETE /api/sessions/:id - Delete session
-router.delete('/:id', authMiddleware, async (req: AuthRequest, res) => {
+router.delete('/:id', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { id } = req.params;
 

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { ValidationError, NotFoundError } from '../middleware/errorHandler';
@@ -8,7 +8,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 // POST /api/telemetry - Add telemetry data to session
-router.post('/', authMiddleware, async (req: AuthRequest, res) => {
+router.post('/', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { sessionId, telemetryData } = req.body;
 
@@ -72,7 +72,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
 });
 
 // GET /api/telemetry/:sessionId - Get telemetry data for session
-router.get('/:sessionId', authMiddleware, async (req: AuthRequest, res) => {
+router.get('/:sessionId', authMiddleware, async (req: AuthRequest, res, next: NextFunction) => {
   try {
     const { sessionId } = req.params;
     const { limit = 1000, offset = 0 } = req.query;
