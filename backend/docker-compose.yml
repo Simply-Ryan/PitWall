@@ -19,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - stockleague-network
+      - pitwall-network
 
   # Node.js Backend API
   api:
