@@ -36,11 +36,18 @@ REM --- STEP 3: INFRASTRUCTURE CHECK ---
 
 where docker >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-echo [OK] Docker detected.
-set USE_DOCKER=true
+    docker info >nul 2>nul
+    if %ERRORLEVEL% EQU 0 (
+        echo [OK] Docker detected.
+        set USE_DOCKER=true
+    ) else (
+        echo [WARNING] Docker CLI found, but Docker daemon is not running or accessible.
+        echo [WARNING] Local PostgreSQL must be running on 5432 or start Docker Desktop.
+        set USE_DOCKER=false
+    )
 ) else (
-echo [WARNING] Docker not detected. Local PostgreSQL must be running on 5432.
-set USE_DOCKER=false
+    echo [WARNING] Docker not detected. Local PostgreSQL must be running on 5432.
+    set USE_DOCKER=false
 )
 
 REM --- STEP 4: INSTALLATION ---
@@ -82,30 +89,50 @@ if "!USE_DOCKER!"=="true" (
 echo Starting PostgreSQL via Docker...
 docker ps -a --format "{{.Names}}" | findstr /I "pitwall-db" > nul
 if %ERRORLEVEL% NEQ 0 (
-docker run -d --name pitwall-db -e POSTGRES_DB=pitwall -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres:15-alpine > nul 2>&1
+    docker run -d --name pitwall-db -e POSTGRES_DB=pitwall -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres:15-alpine > nul 2>&1
+    if %ERRORLEVEL% NEQ 0 (
+        echo [WARNING] Failed to start Docker DB container. Local PostgreSQL must be running on 5432.
+        set USE_DOCKER=false
+    )
 ) else (
-docker start pitwall-db > nul 2>&1
+    docker start pitwall-db > nul 2>&1
+    if %ERRORLEVEL% NEQ 0 (
+        echo [WARNING] Failed to start existing Docker DB container. Local PostgreSQL must be running on 5432.
+        set USE_DOCKER=false
+    )
 )
-echo Waiting for DB to warm up...
-timeout /t 5 /nobreak > nul
+if "!USE_DOCKER!"=="true" (
+    echo Waiting for DB to warm up...
+    timeout /t 5 /nobreak > nul
+)
 )
 
 REM --- STEP 6: SCHEMA MIGRATION ---
 echo [6/7] Syncing Database Schema...
+set DB_SYNC_OK=true
 call npx prisma generate
 call npx prisma db push
 if %ERRORLEVEL% NEQ 0 (
 echo [WARNING] Database sync failed. Check if PostgreSQL is running.
+set DB_SYNC_OK=false
 ) else (
 echo [OK] Database schema is up to date.
 )
 
 REM --- STEP 7: SEEDING ---
+if "!DB_SYNC_OK!"=="true" (
 echo [7/7] Data Seeding...
 set /p SEED_DB="Seed the database with sample racers/tracks? (y/n): "
 if /i "!SEED_DB!"=="y" (
-call npm run seed
-echo [OK] Sample data injected.
+    call npm run seed
+    if %ERRORLEVEL% EQU 0 (
+        echo [OK] Sample data injected.
+    ) else (
+        echo [WARNING] Data seeding failed. Please verify PostgreSQL is running and try again.
+    )
+)
+) else (
+echo [7/7] Skipping data seeding because database schema synchronization failed.
 )
 
 echo.

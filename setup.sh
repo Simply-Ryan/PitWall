@@ -64,8 +64,14 @@ log_success "Version check passed. Using --legacy-peer-deps for compatibility."
 # Step 3: Check Docker
 log_step "Checking infrastructure"
 if command_exists docker; then
-  log_success "Docker detected"
-  USE_DOCKER=true
+  if docker info >/dev/null 2>&1; then
+    log_success "Docker detected"
+    USE_DOCKER=true
+  else
+    log_warning "Docker CLI found, but daemon is not running or accessible."
+    log_warning "Expecting local PostgreSQL on 5432 or start Docker Desktop."
+    USE_DOCKER=false
+  fi
 else
   log_warning "Docker not detected. Expecting local PostgreSQL on 5432"
   USE_DOCKER=false
@@ -96,32 +102,50 @@ fi
 if [ "$USE_DOCKER" = true ]; then
   echo -e "${BLUE}➜${NC} Starting PostgreSQL via Docker..."
   if ! docker ps -a --format '{{.Names}}' | grep -q pitwall-db; then
-    docker run -d --name pitwall-db -e POSTGRES_DB=pitwall -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres:15-alpine > /dev/null 2>&1
+    if ! docker run -d --name pitwall-db -e POSTGRES_DB=pitwall -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres:15-alpine > /dev/null 2>&1; then
+      log_warning "Failed to start Docker DB container. Local PostgreSQL must be running on 5432."
+      USE_DOCKER=false
+    fi
   else
-    docker start pitwall-db > /dev/null 2>&1 || true
+    if ! docker start pitwall-db > /dev/null 2>&1; then
+      log_warning "Failed to start existing Docker DB container. Local PostgreSQL must be running on 5432."
+      USE_DOCKER=false
+    fi
   fi
-  log_info "Waiting for DB to start..."
-  sleep 5
-  log_success "Database container running"
+  if [ "$USE_DOCKER" = true ]; then
+    log_info "Waiting for DB to start..."
+    sleep 5
+    log_success "Database container running"
+  fi
 fi
 
 # Step 6: Sync Database Schema
 log_step "Syncing Database Schema"
-echo -e "${BLUE}➜${NC} Pushing schema via Prisma..."
+log_info "Pushing schema via Prisma..."
+DB_SYNC_OK=true
 npx prisma generate
 if npx prisma db push; then
   log_success "Database schema is up to date"
 else
   log_warning "Schema sync failed. Ensure PostgreSQL is accessible"
+  DB_SYNC_OK=false
 fi
 
 # Step 7: Seed Database (Optional)
-log_step "Data Seeding"
-read -p "Seed database with sample racers? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  npm run seed > /dev/null 2>&1
-  log_success "Sample data injected"
+if [ "$DB_SYNC_OK" = true ]; then
+  log_step "Data Seeding"
+  read -p "Seed database with sample racers? (y/n) " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if npm run seed >/dev/null 2>&1; then
+      log_success "Sample data injected"
+    else
+      log_warning "Data seeding failed. Please verify PostgreSQL is running and try again."
+    fi
+  fi
+else
+  log_step "Data Seeding"
+  log_warning "Skipping seeding because database schema synchronization failed."
 fi
 
 echo -e "\n${CYAN}╔════════════════════════════════════════╗${NC}"
