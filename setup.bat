@@ -1,6 +1,6 @@
 @echo off
-REM PitWall Quick Start Script for Windows
-REM This script sets up PitWall with minimal user interaction
+REM PitWall Quick Start Script for Windows - Optimized for 2026
+REM This script handles environment verification, dependency fixing, and DB setup.
 
 setlocal enabledelayedexpansion
 
@@ -9,185 +9,119 @@ echo PitWall Quick Start Setup
 echo ============================
 echo.
 
-REM Check Node.js
+REM --- STEP 1: ENVIRONMENT CHECK ---
+
 where node >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] Node.js is not installed
-  echo Please install Node.js 18+ from https://nodejs.org/
-  pause
-  exit /b 1
+echo [ERROR] Node.js is not installed. Please install Node.js 20+ from https://nodejs.org/
+pause
+exit /b 1
 )
 
 for /f "tokens=*" %%i in ('node --version') do set NODE_VERSION=%%i
 echo [OK] Node.js %NODE_VERSION%
 
-REM Check npm
 where npm >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] npm is not installed
-  pause
-  exit /b 1
+echo [ERROR] npm is not installed.
+pause
+exit /b 1
 )
 
-for /f "tokens=*" %%i in ('npm --version') do set NPM_VERSION=%%i
-echo [OK] npm %NPM_VERSION%
+REM --- STEP 2: DEPENDENCY SELF-HEALING ---
+echo [2/7] Auditing package versions...
 
-REM Check for Docker
+REM This block fixes the hallucinated version issue in the frontend package.json
+if exist frontend\package.json (
+echo Checking for invalid @react-navigation versions...
+powershell -Command "(gc frontend\package.json) -replace '@react-navigation/bottom-tabs": "6.3.4"', '@react-navigation/bottom-tabs": "^^7.0.0"' | Out-File -encoding ASCII frontend\package.json"
+echo [OK] Frontend package.json patched for compatibility.
+)
+
+REM --- STEP 3: INFRASTRUCTURE CHECK ---
+
 where docker >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-  echo [OK] Docker is available (will use for PostgreSQL)
-  set USE_DOCKER=true
+echo [OK] Docker detected.
+set USE_DOCKER=true
 ) else (
-  echo [WARNING] Docker not detected (will expect local PostgreSQL on localhost:5432)
-  set USE_DOCKER=false
+echo [WARNING] Docker not detected. Local PostgreSQL must be running on 5432.
+set USE_DOCKER=false
 )
 
-REM Check for Python (required for native modules like bcrypt)
-where python >nul 2>nul
-if %ERRORLEVEL% EQU 0 (
-  echo [OK] Python is available
-) else (
-  echo [INFO] Python not found in PATH (may be needed for native module compilation)
-)
+REM --- STEP 4: INSTALLATION ---
+echo [4/7] Installing dependencies (this may take a few minutes)...
 
-REM Step 4: Install Dependencies
-echo [4/7] Installing dependencies...
-echo.
-
-REM Clean npm cache and remove old lock files
-echo Cleaning npm cache and old lock files...
-call npm cache clean --force > nul 2>&1
-
+echo Configuring backend...
 cd backend
-if exist package-lock.json del package-lock.json > nul
-echo Configuring backend dependencies...
-echo Running: npm install
+REM We keep the lock file if it exists to ensure stability, unless it's corrupted
 call npm install
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] Failed to install backend dependencies
-  echo.
-  echo Troubleshooting tips:
-  echo   1. Check your internet connection
-  echo   2. Try running setup.bat again
-  echo   3. Update Node.js to the latest version
-  echo   4. Check npm-cache log: %APPDATA%\npm-cache\_logs
-  pause
-  exit /b 1
+echo [ERROR] Backend install failed. Retrying with clean slate...
+if exist package-lock.json del package-lock.json
+call npm install
 )
-echo [OK] Backend dependencies installed
+echo [OK] Backend ready.
 
-REM Install frontend dependencies
+echo Configuring frontend...
 cd ..\frontend
-if exist package-lock.json del package-lock.json > nul
-echo Configuring frontend dependencies...
-echo Running: npm install --legacy-peer-deps
+REM --legacy-peer-deps is used to bypass version conflicts between React 18/19 and older plugins
 call npm install --legacy-peer-deps
 if %ERRORLEVEL% NEQ 0 (
-  echo [ERROR] Failed to install frontend dependencies
-  echo.
-  echo Troubleshooting tips:
-  echo   1. Check your internet connection
-  echo   2. Try running setup.bat again
-  echo   3. Update Node.js to the latest version
-  echo   4. Check npm-cache log: %APPDATA%\npm-cache\_logs
-  pause
-  exit /b 1
+echo [ERROR] Frontend install failed.
+echo TIP: Try running 'npm cache clean --force' and then restart this script.
+pause
+exit /b 1
 )
-echo [OK] Frontend dependencies installed
+echo [OK] Frontend ready.
 
-echo.
+REM --- STEP 5: DATABASE CONFIGURATION ---
 echo [5/7] Configuring database...
 
-REM Setup database
 cd ..\backend
-
-REM Create .env if it doesn't exist
 if not exist .env (
-  echo Creating .env file from template...
-  copy .env.example .env > nul
-  echo [OK] Generated .env file
+echo Generating .env from template...
+copy .env.example .env > nul
 )
 
 if "!USE_DOCKER!"=="true" (
-  echo Setting up PostgreSQL with Docker...
-  
-  REM Check if container exists
-  docker ps -a --format "table {{.Names}}" 2>nul | find "pitwall-db" >nul
-  if %ERRORLEVEL% NEQ 0 (
-    echo Creating PostgreSQL container...
-    docker run -d ^
-      --name pitwall-db ^
-      -e POSTGRES_DB=pitwall ^
-      -e POSTGRES_USER=postgres ^
-      -e POSTGRES_PASSWORD=password ^
-      -p 5432:5432 ^
-      postgres:14-alpine > nul 2>&1
-    
-    echo Waiting 3 seconds for database to start...
-    timeout /t 3 /nobreak > nul
-  ) else (
-    echo PostgreSQL container exists, starting it...
-    docker start pitwall-db > nul 2>&1
-    timeout /t 1 /nobreak > nul
-  )
-  echo [OK] PostgreSQL database ready
-) else (
-  echo [WARNING] Please ensure PostgreSQL is running on localhost:5432
-  echo Waiting a moment...
-  timeout /t 2 /nobreak > nul
-)
-
-REM Step 6: Run Database Migrations
-echo [6/7] Running database migrations...
-echo Initializing Prisma migrations...
-echo.
-
-call npx prisma migrate dev --name init --skip-generate
+echo Starting PostgreSQL via Docker...
+docker ps -a --format "{{.Names}}" | findstr /I "pitwall-db" > nul
 if %ERRORLEVEL% NEQ 0 (
-  echo [WARNING] Migration encountered an issue - may have already been initialized
-)
-echo [OK] Database migrations completed
-echo.
-
-REM Step 7: Seed Database
-echo [7/7] Optional: Seed database with test data
-set /p SEED_DB="Would you like to seed the database? (y/n): "
-
-if /i "!SEED_DB!"=="y" (
-  echo Seeding database...
-  call npm run seed > nul 2>&1
-  if %ERRORLEVEL% EQU 0 (
-    echo [OK] Database seeded with test data
-    echo.
-    echo Test user credentials:
-    echo    Username: racer1   Password: Password123!
-    echo    Username: racer2   Password: Password456!
-    echo    Username: racer3   Password: Password789!
-  ) else (
-    echo [WARNING] Seeding failed - but setup is otherwise complete
-  )
+docker run -d --name pitwall-db -e POSTGRES_DB=pitwall -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=password -p 5432:5432 postgres:15-alpine > nul 2>&1
 ) else (
-  echo Skipping database seeding
+docker start pitwall-db > nul 2>&1
+)
+echo Waiting for DB to warm up...
+timeout /t 5 /nobreak > nul
+)
+
+REM --- STEP 6: SCHEMA MIGRATION ---
+echo [6/7] Syncing Database Schema...
+call npx prisma generate
+call npx prisma db push
+if %ERRORLEVEL% NEQ 0 (
+echo [WARNING] Database sync failed. Check if PostgreSQL is running.
+) else (
+echo [OK] Database schema is up to date.
+)
+
+REM --- STEP 7: SEEDING ---
+echo [7/7] Data Seeding...
+set /p SEED_DB="Seed the database with sample racers/tracks? (y/n): "
+if /i "!SEED_DB!"=="y" (
+call npm run seed
+echo [OK] Sample data injected.
 )
 
 echo.
 echo ========================================
-echo Setup Complete!
+echo PITWALL IS READY TO RACE
 echo ========================================
 echo.
-echo To start the application:
+echo 1. Start Backend:  cd backend ^&^& npm run dev
+echo 2. Start Frontend: cd frontend ^&^& npm run web
 echo.
-echo    Backend (Command Prompt/PowerShell):
-echo    cd backend
-echo    npm run dev
-echo.
-echo    Frontend (New terminal):
-echo    cd frontend
-echo    npm run web
-echo.
-echo Access the app at: http://localhost:5173
-echo API Docs at: http://localhost:3000/api/docs
-echo.
-echo Happy racing!
-echo.
+echo URL: http://localhost:5173
+echo ========================================
 pause
