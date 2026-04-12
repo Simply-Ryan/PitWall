@@ -18,6 +18,7 @@ import lapRoutes from './routes/laps';
 import leaderboardRoutes from './routes/leaderboards';
 import userRoutes from './routes/users';
 import analyticsRoutes from './routes/analytics';
+import strategyRoutes from './routes/strategy';
 
 export const createApp = (): Express => {
   const app = express();
@@ -58,6 +59,7 @@ export const createApp = (): Express => {
   app.use(`${apiPrefix}/analytics`, authMiddleware, analyticsRoutes); // Additional analytics endpoints (fuel, etc)
   app.use(`${apiPrefix}/telemetry`, authMiddleware, telemetryRoutes);
   app.use(`${apiPrefix}/laps`, authMiddleware, lapRoutes);
+  app.use(`${apiPrefix}/strategy`, authMiddleware, strategyRoutes); // Race strategy endpoints
   app.use(`${apiPrefix}/leaderboards`, leaderboardRoutes); // Public leaderboards
 
   // 404 handler

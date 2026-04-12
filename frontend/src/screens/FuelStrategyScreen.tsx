@@ -25,6 +25,22 @@ import {
   addAlert,
 } from '../redux/slices/fuelStrategySlice';
 import { getFuelStatusColor } from '../services/FuelCalculator';
+import {
+  COLORS,
+  SPACING,
+  BORDER_RADIUS,
+  TYPOGRAPHY,
+  SHADOWS,
+  COMMON_STYLES,
+} from '../utils/theme';
+import {
+  StyledCard,
+  MetricDisplay,
+  SectionHeader,
+  Divider,
+  AlertBox,
+  StatusIndicator,
+} from '../components/StyledComponents';
 
 const { width } = Dimensions.get('window');
 
@@ -92,213 +108,271 @@ export const FuelStrategyScreen: React.FC<FuelStrategyScreenProps> = ({ navigati
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>FUEL STRATEGY</Text>
+      {/* Premium Header */}
+      <View style={styles.premiumHeader}>
+        <Text style={styles.screenTitle}>⛽ FUEL STRATEGY</Text>
+        <Text style={styles.screenSubtitle}>Pit Stop Analysis & Predictions</Text>
       </View>
 
       {/* Main Status Panel */}
-      <View style={[styles.mainPanel, { borderColor: statusColor }]}>
-        <View style={styles.statusRow}>
-          <View style={styles.statusIndicator}>
-            <View style={[styles.statusLight, { backgroundColor: statusColor }]} />
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {metrics.safetyStatus.toUpperCase()}
-            </Text>
+      <View style={styles.mainPanelContainer}>
+        <StyledCard variant="accent" title="Fuel Status & Finish Prediction">
+          <View style={styles.statusMainContent}>
+            <View style={styles.statusIndicatorContainer}>
+              <StatusIndicator
+                status={metrics.safetyStatus as any}
+                label={metrics.safetyStatus.toUpperCase()}
+                size="lg"
+              />
+            </View>
+
+            <Divider variant="accent" spacing="md" />
+
+            <View style={styles.finishPredictionRow}>
+              <View>
+                <Text style={styles.finishPredictionLabel}>Predicted End Fuel</Text>
+                <Text
+                  style={[
+                    styles.finishPredictionValue,
+                    { color: metrics.willFinish ? COLORS.status.success : COLORS.status.danger },
+                  ]}
+                >
+                  {metrics.predictedEndFuel.toFixed(2)}L
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.finishPredictionLabel}>Can Finish?</Text>
+                <Text
+                  style={[
+                    styles.finishPredictionValue,
+                    { color: metrics.willFinish ? COLORS.status.success : COLORS.status.danger },
+                  ]}
+                >
+                  {metrics.willFinish ? '✓ YES' : '✗ NO'}
+                </Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.willFinishIndicator}>
-            <Text style={styles.willFinishLabel}>
-              {metrics.willFinish ? '✓ CAN FINISH' : '✗ REFUEL NEEDED'}
-            </Text>
-            <Text style={[styles.willFinishValue, { color: metrics.willFinish ? '#00FF00' : '#FF4444' }]}>
-              {metrics.predictedEndFuel.toFixed(2)}L
-            </Text>
-          </View>
+        </StyledCard>
+      </View>
+
+      {/* Current Fuel Metrics */}
+      <View style={styles.sectionContainer}>
+        <SectionHeader title="Current Metrics" subtitle="Real-time Fuel Status" />
+        <View style={styles.metricsGrid}>
+          <MetricDisplay
+            label="Current Level"
+            value={metrics.currentLevel.toFixed(1)}
+            unit="L"
+          />
+          <MetricDisplay
+            label="Tank Capacity"
+            value={metrics.capacity.toFixed(1)}
+            unit="L"
+          />
+          <MetricDisplay
+            label="Avg Consumption"
+            value={metrics.avgConsumption.toFixed(3)}
+            unit="L/Lap"
+          />
+          <MetricDisplay
+            label="Consistency"
+            value={metrics.consistency.toFixed(3)}
+            trend={metrics.consistency < 0.5 ? 'down' : metrics.consistency < 1.0 ? 'stable' : 'up'}
+          />
         </View>
       </View>
 
-      {/* Fuel Metrics Grid */}
-      <View style={styles.metricsGrid}>
-        <MetricCard label="CURRENT" value={`${metrics.currentLevel.toFixed(1)}L`} subtext="Fuel Level" />
-        <MetricCard label="CAPACITY" value={`${metrics.capacity.toFixed(1)}L`} subtext="Tank" />
-        <MetricCard
-          label="AVG CONSUMPTION"
-          value={`${metrics.avgConsumption.toFixed(3)}L`}
-          subtext="Per Lap"
-        />
-        <MetricCard
-          label="CONSISTENCY"
-          value={`${metrics.consistency.toFixed(3)}`}
-          subtext="Std Dev"
-          color={metrics.consistency < 0.5 ? '#00FF00' : metrics.consistency < 1.0 ? '#FFFF00' : '#FF8800'}
-        />
-      </View>
+      {/* Race Predictions */}
+      <View style={styles.sectionContainer}>
+        <SectionHeader title="Race Predictions" subtitle="Fuel Consumption Forecast" />
+        <StyledCard variant="default">
+          <View style={styles.predictionContent}>
+            <View style={styles.predictionRow}>
+              <Text style={styles.predictionLabel}>Remaining Laps</Text>
+              <Text style={styles.predictionValue}>{metrics.remainingLaps}</Text>
+            </View>
 
-      {/* Predictions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>RACE PREDICTIONS</Text>
-        <View style={styles.predictionCard}>
-          <View style={styles.predictionRow}>
-            <Text style={styles.predictionLabel}>Remaining Laps</Text>
-            <Text style={styles.predictionValue}>{metrics.remainingLaps}</Text>
+            <View style={styles.predictionRow}>
+              <Text style={styles.predictionLabel}>Projected End Fuel</Text>
+              <Text style={[styles.predictionValue, { color: statusColor }]}>
+                {metrics.predictedEndFuel.toFixed(2)}L
+              </Text>
+            </View>
+
+            <View style={styles.predictionRow}>
+              <Text style={styles.predictionLabel}>Safety Margin</Text>
+              <Text style={styles.predictionValue}>{metrics.safetyMargin.toFixed(1)}L</Text>
+            </View>
+
+            <Divider variant="light" spacing="md" />
+
+            <View style={styles.predictionRow}>
+              <Text style={styles.predictionLabel}>Margin Status</Text>
+              <Text style={[styles.predictionValue, { color: statusColor }]}>
+                {(metrics.predictedEndFuel - metrics.safetyMargin).toFixed(2)}L
+              </Text>
+            </View>
           </View>
-          <View style={styles.predictionRow}>
-            <Text style={styles.predictionLabel}>Currently Projected to End With</Text>
-            <Text style={[styles.predictionValue, { color: statusColor }]}>
-              {metrics.predictedEndFuel.toFixed(2)}L
-            </Text>
-          </View>
-          <View style={styles.predictionRow}>
-            <Text style={styles.predictionLabel}>Safety Margin</Text>
-            <Text style={styles.predictionValue}>{metrics.safetyMargin.toFixed(1)}L</Text>
-          </View>
-          <View style={[styles.predictionRow, styles.borderTop]}>
-            <Text style={styles.predictionLabel}>Margin Status</Text>
-            <Text style={[styles.predictionValue, { color: statusColor }]}>
-              {(metrics.predictedEndFuel - metrics.safetyMargin).toFixed(2)}L
-            </Text>
-          </View>
-        </View>
+        </StyledCard>
       </View>
 
       {/* Pit Strategy */}
       {strategy && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PIT STRATEGY</Text>
-          <View style={styles.strategyCard}>
-            <View style={styles.strategyRow}>
-              <Text style={styles.strategyLabel}>Total Pit Stops Needed</Text>
-              <Text style={styles.strategyValue}>{strategy.stopCount}</Text>
-            </View>
-            <View style={styles.strategyRow}>
-              <Text style={styles.strategyLabel}>Fuel Per Stop</Text>
-              <Text style={styles.strategyValue}>{strategy.fuelPerStop}L</Text>
-            </View>
-            <View style={styles.strategyRow}>
-              <Text style={styles.strategyLabel}>Laps Per Stop</Text>
-              <Text style={styles.strategyValue}>{strategy.lapsPerStop}</Text>
-            </View>
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="Pit Strategy" subtitle="Stop Count & Fuel Distribution" />
+          <StyledCard variant="default">
+            <View style={styles.strategyContent}>
+              <View style={styles.strategyRow}>
+                <Text style={styles.strategyLabel}>Total Pit Stops Needed</Text>
+                <Text style={styles.strategyValue}>{strategy.stopCount}</Text>
+              </View>
+              <View style={styles.strategyRow}>
+                <Text style={styles.strategyLabel}>Fuel Per Stop</Text>
+                <Text style={styles.strategyValue}>{strategy.fuelPerStop}L</Text>
+              </View>
+              <View style={styles.strategyRow}>
+                <Text style={styles.strategyLabel}>Laps Per Stop</Text>
+                <Text style={styles.strategyValue}>{strategy.lapsPerStop}</Text>
+              </View>
 
-            {/* Pit Window */}
-            <View style={[styles.strategyRow, styles.borderTop]}>
-              <Text style={styles.strategyLabel}>Recommended Pit Window</Text>
+              <Divider variant="light" spacing="md" />
+
+              {/* Pit Window */}
+              <Text style={styles.pitWindowTitle}>Recommended Pit Window</Text>
+              <View style={styles.pitWindowContainer}>
+                <View style={styles.pitWindowItem}>
+                  <Text style={styles.pitWindowLabel}>Earliest</Text>
+                  <Text style={styles.pitWindowValue}>Lap {strategy.pitWindow.earliest}</Text>
+                </View>
+                <View style={styles.pitWindowItemCenter}>
+                  <Text style={styles.pitWindowLabel}>Recommended</Text>
+                  <Text style={[styles.pitWindowValue, { color: COLORS.accent.cyan }]}>
+                    Lap {strategy.pitWindow.recommendedLap}
+                  </Text>
+                </View>
+                <View style={styles.pitWindowItem}>
+                  <Text style={styles.pitWindowLabel}>Latest</Text>
+                  <Text style={styles.pitWindowValue}>Lap {strategy.pitWindow.latest}</Text>
+                </View>
+              </View>
             </View>
-            <View style={styles.pitWindowContainer}>
-              <View style={styles.pitWindowItem}>
-                <Text style={styles.pitWindowLabel}>Earliest</Text>
-                <Text style={styles.pitWindowValue}>L{strategy.pitWindow.earliest}</Text>
-              </View>
-              <View style={styles.pitWindowItem}>
-                <Text style={styles.pitWindowLabel}>Recommended</Text>
-                <Text style={[styles.pitWindowValue, { color: '#00FF00' }]}>
-                  L{strategy.pitWindow.recommendedLap}
-                </Text>
-              </View>
-              <View style={styles.pitWindowItem}>
-                <Text style={styles.pitWindowLabel}>Latest</Text>
-                <Text style={styles.pitWindowValue}>L{strategy.pitWindow.latest}</Text>
-              </View>
-            </View>
-          </View>
+          </StyledCard>
         </View>
       )}
 
       {/* Consumption Trend */}
       {trend && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>CONSUMPTION TREND</Text>
-          <View style={styles.trendCard}>
-            <View style={styles.trendIndicator}>
-              <Text
-                style={[
-                  styles.trendArrow,
-                  {
-                    color:
-                      trend === 'increasing'
-                        ? '#FF4444'
-                        : trend === 'decreasing'
-                          ? '#00FF00'
-                          : '#CCCCCC',
-                  },
-                ]}
-              >
-                {trend === 'increasing' ? '↑' : trend === 'decreasing' ? '↓' : '→'}
-              </Text>
-              <Text style={[styles.trendText, { marginLeft: 8 }]}>
-                Consumption is {trend === 'increasing' ? 'INCREASING' : trend === 'decreasing' ? 'DECREASING' : 'STABLE'}
-              </Text>
-            </View>
-            {conservative && (
-              <View style={[styles.trendRow, styles.borderTop]}>
-                <Text style={styles.trendLabel}>Conservative Estimate</Text>
-                <Text style={styles.trendValue}>{conservative.minEndFuel.toFixed(2)}L</Text>
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="Consumption Trend" subtitle="Fuel Usage Pattern" />
+          <StyledCard
+            variant={
+              trend === 'increasing' ? 'danger' : trend === 'decreasing' ? 'accent' : 'default'
+            }
+          >
+            <View style={styles.trendContent}>
+              <View style={styles.trendIndicator}>
+                <Text
+                  style={[
+                    styles.trendArrow,
+                    {
+                      color:
+                        trend === 'increasing'
+                          ? COLORS.status.danger
+                          : trend === 'decreasing'
+                            ? COLORS.status.success
+                            : COLORS.text.secondary,
+                    },
+                  ]}
+                >
+                  {trend === 'increasing' ? '↑' : trend === 'decreasing' ? '↓' : '→'}
+                </Text>
+                <Text style={styles.trendText}>
+                  Consumption is{' '}
+                  {trend === 'increasing'
+                    ? 'INCREASING'
+                    : trend === 'decreasing'
+                      ? 'DECREASING'
+                      : 'STABLE'}
+                </Text>
               </View>
-            )}
-          </View>
+              {conservative && (
+                <>
+                  <Divider variant="light" spacing="md" />
+                  <View style={styles.conservativeRow}>
+                    <Text style={styles.conservativeLabel}>Conservative Estimate</Text>
+                    <Text style={styles.conservativeValue}>
+                      {conservative.minEndFuel.toFixed(2)}L
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+          </StyledCard>
         </View>
       )}
 
       {/* Pit Impact Analysis */}
       {pitImpact && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>PIT IMPACT ANALYSIS</Text>
-          <View style={styles.impactCard}>
-            <View style={styles.impactRow}>
-              <Text style={styles.impactLabel}>Pit Stop Cost</Text>
-              <Text style={styles.impactValue}>~{pitImpact.lapTimeLoss.toFixed(1)}s</Text>
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="Pit Impact" subtitle="Stop Time & Strategy Assessment" />
+          <StyledCard variant="default">
+            <View style={styles.impactContent}>
+              <View style={styles.impactRow}>
+                <Text style={styles.impactLabel}>Pit Stop Cost</Text>
+                <Text style={styles.impactValue}>~{pitImpact.lapTimeLoss.toFixed(1)}s</Text>
+              </View>
+
+              <Divider variant="light" spacing="md" />
+
+              <View style={styles.impactRow}>
+                <Text
+                  style={[
+                    styles.impactLabel,
+                    { color: pitImpact.isFuelIssue ? COLORS.status.danger : COLORS.status.success },
+                  ]}
+                >
+                  Fuel Critical
+                </Text>
+                <Text
+                  style={[
+                    styles.impactValue,
+                    { color: pitImpact.isFuelIssue ? COLORS.status.danger : COLORS.status.success },
+                  ]}
+                >
+                  {pitImpact.isFuelIssue ? '✗ YES' : '✓ NO'}
+                </Text>
+              </View>
+
+              <Divider variant="light" spacing="md" />
+
+              <Text style={styles.recommendationText}>{pitImpact.recommendation}</Text>
             </View>
-            <View style={[styles.impactRow, styles.borderTop]}>
-              <Text style={[styles.impactLabel, { color: pitImpact.isFuelIssue ? '#FF4444' : '#00FF00' }]}>
-                Fuel Critical
-              </Text>
-              <Text style={[styles.impactValue, { color: pitImpact.isFuelIssue ? '#FF4444' : '#00FF00' }]}>
-                {pitImpact.isFuelIssue ? 'YES' : 'NO'}
-              </Text>
-            </View>
-            <View style={[styles.impactRow, styles.borderTop]}>
-              <Text style={styles.impactRecommendation}>{pitImpact.recommendation}</Text>
-            </View>
-          </View>
+          </StyledCard>
         </View>
       )}
 
       {/* Active Alerts */}
       {fuelStrategy.alerts.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ACTIVE ALERTS</Text>
+        <View style={styles.sectionContainer}>
+          <SectionHeader title="Active Alerts" subtitle="Strategy Notifications" />
           {fuelStrategy.alerts
             .filter((a) => !a.dismissed)
             .map((alert) => (
-              <View
+              <AlertBox
                 key={alert.id}
-                style={[
-                  styles.alertBox,
-                  {
-                    borderLeftColor:
-                      alert.severity === 'critical'
-                        ? '#FF4444'
-                        : alert.severity === 'warning'
-                          ? '#FFFF00'
-                          : '#00FF00',
-                  },
-                ]}
-              >
-                <Text style={styles.alertMessage}>{alert.message}</Text>
-              </View>
+                type={
+                  alert.severity === 'critical'
+                    ? 'error'
+                    : alert.severity === 'warning'
+                      ? 'warning'
+                      : 'info'
+                }
+                message={alert.message}
+              />
             ))}
         </View>
       )}
-
-      {/* Debug Info */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>DEBUG INFO</Text>
-        <View style={styles.debugBox}>
-          <DebugRow label="Laps Tracked" value={fuelStrategy.consumptionHistory.length} />
-          <DebugRow label="Last Update" value={new Date(fuelStrategy.lastUpdateTime).toLocaleTimeString()} />
-          <DebugRow label="Status" value={fuelStrategy.status} />
-          {fuelStrategy.trend && <DebugRow label="Trend" value={fuelStrategy.trend} />}
-        </View>
-      </View>
 
       {/* Bottom Padding */}
       <View style={styles.spacer} />
@@ -334,358 +408,238 @@ const DebugRow: React.FC<{ label: string; value: any }> = ({ label, value }) => 
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0A0E27',
+    ...COMMON_STYLES.screenContainer,
     paddingTop: 0,
   },
 
-  header: {
-    backgroundColor: '#111111',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+  // Premium Header
+  premiumHeader: {
+    backgroundColor: COLORS.background.secondary,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
     borderBottomWidth: 2,
-    borderBottomColor: '#333333',
+    borderBottomColor: COLORS.border.primary,
   },
 
-  title: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: 'bold',
+  screenTitle: {
+    ...TYPOGRAPHY.heading.h2,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
     letterSpacing: 2,
   },
 
-  placeholderText: {
-    color: '#666666',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-
-  errorText: {
-    color: '#FF4444',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 40,
-  },
-
-  // Main Status Panel
-  mainPanel: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#444444',
-  },
-
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  statusLight: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 12,
-  },
-
-  statusText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-
-  willFinishIndicator: {
-    alignItems: 'flex-end',
-  },
-
-  willFinishLabel: {
-    color: '#888888',
-    fontSize: 11,
-    fontWeight: 'bold',
+  screenSubtitle: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
     letterSpacing: 0.5,
   },
 
-  willFinishValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 4,
+  // Main Panel Container
+  mainPanelContainer: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+  },
+
+  statusMainContent: {
+    gap: SPACING.lg,
+  },
+
+  statusIndicatorContainer: {
+    alignItems: 'center',
+  },
+
+  finishPredictionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+
+  finishPredictionLabel: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontWeight: 'bold' as const,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+    textTransform: 'uppercase',
+  },
+
+  finishPredictionValue: {
+    fontSize: 20,
+    fontWeight: 'bold' as const,
+    textAlign: 'center',
+  },
+
+  // Section Container
+  sectionContainer: {
+    paddingHorizontal: SPACING.lg,
+    marginVertical: SPACING.xl,
   },
 
   // Metrics Grid
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    marginTop: 16,
-    justifyContent: 'space-between',
+    gap: SPACING.md,
   },
 
-  metricCard: {
-    width: '48%',
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333333',
-  },
-
-  metricLabel: {
-    color: '#888888',
-    fontSize: 9,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-
-  metricValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-
-  metricSubtext: {
-    color: '#666666',
-    fontSize: 10,
-  },
-
-  // Sections
-  section: {
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-
-  sectionTitle: {
-    color: '#888888',
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1.5,
-    marginBottom: 12,
-  },
-
-  // Prediction Card
-  predictionCard: {
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
-    overflow: 'hidden',
+  // Prediction Content
+  predictionContent: {
+    gap: SPACING.lg,
   },
 
   predictionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
 
   predictionLabel: {
-    color: '#888888',
-    fontSize: 12,
-    flex: 1,
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
   },
 
   predictionValue: {
-    color: '#CCCCCC',
-    fontSize: 13,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: 'bold' as const,
+    color: COLORS.text.primary,
   },
 
-  borderTop: {
-    borderTopWidth: 1,
-    borderTopColor: '#333333',
-  },
-
-  // Strategy Card
-  strategyCard: {
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
-    overflow: 'hidden',
+  // Strategy Content
+  strategyContent: {
+    gap: SPACING.lg,
   },
 
   strategyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
 
   strategyLabel: {
-    color: '#888888',
-    fontSize: 12,
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
   },
 
   strategyValue: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: 'bold' as const,
+    color: COLORS.accent.cyan,
   },
 
   // Pit Window
+  pitWindowTitle: {
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    fontWeight: 'bold' as const,
+    letterSpacing: 1,
+    marginBottom: SPACING.md,
+    textTransform: 'uppercase',
+  },
+
   pitWindowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#333333',
+    paddingVertical: SPACING.md,
   },
 
   pitWindowItem: {
     alignItems: 'center',
+    flex: 1,
+  },
+
+  pitWindowItemCenter: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: SPACING.md,
   },
 
   pitWindowLabel: {
-    color: '#888888',
-    fontSize: 10,
-    marginBottom: 4,
+    fontSize: 11,
+    color: COLORS.text.tertiary,
+    marginBottom: SPACING.sm,
+    letterSpacing: 0.5,
   },
 
   pitWindowValue: {
-    color: '#CCCCCC',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
+    color: COLORS.text.primary,
   },
 
-  // Trend Card
-  trendCard: {
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
-    overflow: 'hidden',
+  // Trend Content
+  trendContent: {
+    gap: SPACING.lg,
   },
 
   trendIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    gap: SPACING.md,
   },
 
   trendArrow: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
   },
 
   trendText: {
-    color: '#CCCCCC',
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
+    color: COLORS.text.primary,
   },
 
-  trendRow: {
+  conservativeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
 
-  trendLabel: {
-    color: '#888888',
-    fontSize: 12,
-  },
-
-  trendValue: {
-    color: '#CCCCCC',
+  conservativeLabel: {
     fontSize: 13,
-    fontWeight: 'bold',
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
   },
 
-  // Impact Card
-  impactCard: {
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#333333',
-    overflow: 'hidden',
+  conservativeValue: {
+    fontSize: 15,
+    fontWeight: 'bold' as const,
+    color: COLORS.text.primary,
+  },
+
+  // Impact Content
+  impactContent: {
+    gap: SPACING.lg,
   },
 
   impactRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
 
   impactLabel: {
-    color: '#888888',
-    fontSize: 12,
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
   },
 
   impactValue: {
-    color: '#CCCCCC',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontWeight: 'bold' as const,
+    color: COLORS.text.primary,
   },
 
-  impactRecommendation: {
-    color: '#00FF00',
+  recommendationText: {
     fontSize: 13,
+    color: COLORS.status.success,
     fontStyle: 'italic',
-    width: '100%',
+    lineHeight: 20,
   },
 
-  // Alert Box
-  alertBox: {
-    backgroundColor: '#1a1a2e',
-    borderLeftWidth: 4,
-    borderRadius: 4,
-    padding: 12,
-    marginBottom: 8,
-  },
-
-  alertMessage: {
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-
-  // Debug Box
-  debugBox: {
-    backgroundColor: '#1a1a2e',
-    borderRadius: 4,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#444444',
-  },
-
-  debugRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
-  },
-
-  debugLabel: {
-    color: '#888888',
-    fontSize: 11,
-  },
-
-  debugValue: {
-    color: '#00FF00',
-    fontSize: 11,
-    fontFamily: 'monospace',
-  },
-
+  // Spacing
   spacer: {
-    height: 40,
+    height: SPACING.xxxl,
   },
 });

@@ -6,7 +6,15 @@
  * - Fuel-to-end predictions
  * - Safety margin calculations
  * - Trend analysis and consistency metrics
+ * - Advanced pit strategy optimization
  */
+
+import FuelStrategyCalculator, {
+  FuelConsumptionData,
+  RaceState,
+  FuelPrediction,
+  PitStrategyOption,
+} from './FuelStrategyCalculator';
 
 export interface FuelMetrics {
   currentLevel: number; // liters
@@ -216,6 +224,140 @@ export function conservativeAnalysis(
     maxConsumption: parseFloat(maxConsumption.toFixed(3)),
     recommendedStop,
   };
+}
+
+/**
+ * Advanced Integration: Get comprehensive fuel prediction using FuelStrategyCalculator
+ * 
+ * @param currentLap Current lap number
+ * @param totalLaps Total laps in race
+ * @param currentFuel Current fuel level in liters
+ * @param fuelCapacity Tank capacity in liters
+ * @param consumptionHistory Array of fuel consumption per lap
+ * @returns Comprehensive fuel prediction with multiple pit strategies
+ */
+export function getAdvancedFuelPrediction(
+  currentLap: number,
+  totalLaps: number,
+  currentFuel: number,
+  fuelCapacity: number,
+  consumptionHistory: number[],
+  fuelBooked?: number
+): FuelPrediction {
+  // Prepare race state
+  const raceState: RaceState = {
+    currentLap,
+    totalLaps,
+    currentFuel,
+    fuelCapacity,
+    fuelBooked,
+  };
+
+  // Prepare consumption data
+  const trend = analyzeTrend(consumptionHistory);
+  const avgConsumption =
+    consumptionHistory.length > 0
+      ? consumptionHistory.reduce((a, b) => a + b, 0) / consumptionHistory.length
+      : 0;
+  const minConsumption =
+    consumptionHistory.length > 0 ? Math.min(...consumptionHistory) : 0;
+  const maxConsumption =
+    consumptionHistory.length > 0 ? Math.max(...consumptionHistory) : 0;
+
+  const consumption: FuelConsumptionData = {
+    currentLapConsumption: consumptionHistory[consumptionHistory.length - 1] || 0,
+    averageConsumption: avgConsumption,
+    minConsumption,
+    maxConsumption,
+    consumptionTrend: trend,
+  };
+
+  // Generate prediction
+  return FuelStrategyCalculator.generatePrediction(raceState, consumption);
+}
+
+/**
+ * Advanced Integration: Get pit strategies
+ * 
+ * @param currentLap Current lap number
+ * @param totalLaps Total laps in race
+ * @param currentFuel Current fuel level
+ * @param fuelCapacity Tank capacity
+ * @param consumptionHistory Array of consumption values
+ * @returns Array of pit strategy options with risk assessment
+ */
+export function getAdvancedPitStrategies(
+  currentLap: number,
+  totalLaps: number,
+  currentFuel: number,
+  fuelCapacity: number,
+  consumptionHistory: number[]
+): PitStrategyOption[] {
+  const raceState: RaceState = {
+    currentLap,
+    totalLaps,
+    currentFuel,
+    fuelCapacity,
+  };
+
+  const trend = analyzeTrend(consumptionHistory);
+  const avgConsumption =
+    consumptionHistory.length > 0
+      ? consumptionHistory.reduce((a, b) => a + b, 0) / consumptionHistory.length
+      : 0;
+  const minConsumption =
+    consumptionHistory.length > 0 ? Math.min(...consumptionHistory) : 0;
+  const maxConsumption =
+    consumptionHistory.length > 0 ? Math.max(...consumptionHistory) : 0;
+
+  const consumption: FuelConsumptionData = {
+    currentLapConsumption: consumptionHistory[consumptionHistory.length - 1] || 0,
+    averageConsumption: avgConsumption,
+    minConsumption,
+    maxConsumption,
+    consumptionTrend: trend,
+  };
+
+  return FuelStrategyCalculator.calculateStrategies(raceState, consumption);
+}
+
+/**
+ * Advanced Integration: Assess current fuel risk
+ * 
+ * @param currentLap Current lap
+ * @param totalLaps Total laps
+ * @param currentFuel Current fuel
+ * @param consumptionHistory Consumption history
+ * @returns Risk assessment with recommendations
+ */
+export function assessAdvancedRisk(
+  currentLap: number,
+  totalLaps: number,
+  currentFuel: number,
+  consumptionHistory: number[]
+) {
+  const raceState: RaceState = {
+    currentLap,
+    totalLaps,
+    currentFuel,
+    fuelCapacity: 100, // Placeholder - will use average
+  };
+
+  const trend = analyzeTrend(consumptionHistory);
+  const avgConsumption =
+    consumptionHistory.length > 0
+      ? consumptionHistory.reduce((a, b) => a + b, 0) / consumptionHistory.length
+      : 0;
+
+  const consumption: FuelConsumptionData = {
+    currentLapConsumption: consumptionHistory[consumptionHistory.length - 1] || 0,
+    averageConsumption: avgConsumption,
+    minConsumption: Math.min(...consumptionHistory),
+    maxConsumption: Math.max(...consumptionHistory),
+    consumptionTrend: trend,
+  };
+
+  return FuelStrategyCalculator.assessRisk(raceState, consumption);
 }
 
 /**

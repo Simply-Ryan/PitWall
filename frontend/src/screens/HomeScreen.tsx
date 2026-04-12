@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useAppSelector, useAppDispatch } from '@redux/store';
 import { setCurrentScreen } from '@redux/slices/uiSlice';
 import { updateTelemetry, setConnected } from '@redux/slices/telemetrySlice';
@@ -7,6 +7,23 @@ import { startSession } from '@redux/slices/sessionSlice';
 import type { RootNavigationProp } from '../App';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../App';
+import {
+  COLORS,
+  SPACING,
+  BORDER_RADIUS,
+  TYPOGRAPHY,
+  SHADOWS,
+  COMMON_STYLES,
+} from '../utils/theme';
+import {
+  StyledButton,
+  StyledCard,
+  StatusIndicator,
+  MetricDisplay,
+  SectionHeader,
+  Divider,
+  AlertBox,
+} from '../components/StyledComponents';
 
 type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -90,113 +107,162 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>🏁 PitWall</Text>
-          <Text style={styles.subtitle}>Simracing Telemetry Hub</Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Premium Header */}
+        <View style={styles.premiumHeader}>
+          <Text style={styles.mainTitle}>🏁 PITWALL</Text>
+          <Text style={styles.mainSubtitle}>Simracing Telemetry Hub</Text>
+          <View style={styles.headerDivider} />
         </View>
 
-        {/* Status Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Status</Text>
+        {/* Status Overview Section */}
+        <SectionHeader title="Connection Status" subtitle="System Overview" />
+        <View style={styles.statusGrid}>
+          <StyledCard variant="default">
+            <Text style={styles.statusCardLabel}>Connection</Text>
+            <StatusIndicator
+              status={telemetry.isConnected ? 'safe' : 'danger'}
+              label={telemetry.isConnected ? 'CONNECTED' : 'DISCONNECTED'}
+              size="lg"
+              style={{ marginTop: SPACING.md }}
+            />
+          </StyledCard>
 
-          {/* Connection Status */}
-          <View style={styles.statusItem}>
-            <Text style={styles.statusLabel}>Connection</Text>
-            <Text
-              style={[styles.statusValue, telemetry.isConnected ? styles.statusConnected : styles.statusDisconnected]}
-            >
-              {telemetry.isConnected ? '🟢 Connected' : '🔴 Disconnected'}
-            </Text>
-          </View>
-
-          {/* Session Status */}
-          <View style={styles.statusItem}>
-            <Text style={styles.statusLabel}>Session</Text>
-            {session.isRecording ? (
-              <View>
-                <Text style={styles.statusRecording}>🔴 RECORDING</Text>
-                <Text style={styles.sessionInfo}>{session.name || 'Unnamed'}</Text>
-                <Text style={styles.sessionInfo}>{session.game}</Text>
-              </View>
-            ) : (
-              <Text style={styles.statusIdle}>⚪ Idle</Text>
+          <StyledCard variant="default">
+            <Text style={styles.statusCardLabel}>Session</Text>
+            <StatusIndicator
+              status={session.isRecording ? 'warning' : 'info'}
+              label={session.isRecording ? 'RECORDING' : 'IDLE'}
+              size="lg"
+              style={{ marginTop: SPACING.md }}
+            />
+            {session.isRecording && (
+              <>
+                <Text style={[styles.sessionDetailText, { marginTop: SPACING.md }]}>
+                  {session.name || 'Unnamed Session'}
+                </Text>
+                <Text style={styles.sessionDetailText}>{session.game}</Text>
+              </>
             )}
-          </View>
+          </StyledCard>
         </View>
 
         {/* Live Telemetry Section */}
         {telemetry.data && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Live Telemetry</Text>
+          <>
+            <SectionHeader title="Live Telemetry" subtitle="Real-time Vehicle Data" style={{ marginTop: SPACING.xxl }} />
+            <StyledCard variant="accent" title="Vehicle Performance">
+              <View style={styles.metricsGrid}>
+                <MetricDisplay
+                  label="Speed"
+                  value={telemetry.data.vehicle.speed.toString()}
+                  unit="km/h"
+                />
+                <MetricDisplay
+                  label="RPM"
+                  value={telemetry.data.vehicle.rpm.toString()}
+                />
+                <MetricDisplay
+                  label="Gear"
+                  value={telemetry.data.vehicle.gear.toString()}
+                />
+                <MetricDisplay
+                  label="Throttle"
+                  value={Math.round(telemetry.data.vehicle.controls.throttle * 100).toString()}
+                  unit="%"
+                />
+              </View>
 
-            <View style={styles.telemRow}>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>Speed</Text>
-                <Text style={styles.telemValue}>{telemetry.data.vehicle.speed} km/h</Text>
-              </View>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>Gear</Text>
-                <Text style={styles.telemValue}>{telemetry.data.vehicle.gear}</Text>
-              </View>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>RPM</Text>
-                <Text style={styles.telemValue}>{telemetry.data.vehicle.rpm}</Text>
-              </View>
-            </View>
+              <Divider variant="accent" spacing="md" />
 
-            <View style={styles.telemRow}>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>Throttle</Text>
-                <Text style={styles.telemValue}>{Math.round(telemetry.data.vehicle.controls.throttle * 100)}%</Text>
+              <View style={styles.metricsGrid}>
+                <MetricDisplay
+                  label="Fuel Level"
+                  value={telemetry.data.vehicle.fuel.level.toFixed(1)}
+                  unit="L"
+                />
+                <MetricDisplay
+                  label="Current Lap"
+                  value={`#${telemetry.data.lap.currentLap}`}
+                />
               </View>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>Fuel</Text>
-                <Text style={styles.telemValue}>{telemetry.data.vehicle.fuel.level.toFixed(1)}L</Text>
-              </View>
-              <View style={styles.telemCell}>
-                <Text style={styles.telemLabel}>Lap</Text>
-                <Text style={styles.telemValue}>#{telemetry.data.lap.currentLap}</Text>
-              </View>
-            </View>
-          </View>
+            </StyledCard>
+          </>
         )}
 
         {/* Error Display */}
         {telemetry.error && (
-          <View style={styles.errorSection}>
-            <Text style={styles.errorTitle}>Error</Text>
-            <Text style={styles.errorMessage}>{telemetry.error}</Text>
+          <View style={{ marginTop: SPACING.lg }}>
+            <AlertBox
+              type="error"
+              message={telemetry.error}
+              onDismiss={() => {}}
+            />
           </View>
         )}
 
         {/* Actions Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Actions</Text>
+        <SectionHeader title="Navigation" subtitle="Quick Access" style={{ marginTop: SPACING.xxl }} />
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={handleLoadSampleTelemetry}
-          >
-            <Text style={styles.buttonText}>📊 View Dashboard (with Sample Data)</Text>
-          </TouchableOpacity>
+        <StyledButton
+          label="Dashboard with Sample Data"
+          variant="primary"
+          size="lg"
+          fullWidth
+          icon="📊"
+          onPress={handleLoadSampleTelemetry}
+        />
 
-          {telemetry.isConnected && telemetry.data && (
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => navigation.navigate('Dashboard')}
-            >
-              <Text style={styles.buttonText}>📊 View Dashboard (Live Data)</Text>
-            </TouchableOpacity>
-          )}
+        {telemetry.isConnected && telemetry.data && (
+          <StyledButton
+            label="Dashboard (Live Data)"
+            variant="secondary"
+            size="lg"
+            fullWidth
+            icon="📊"
+            style={{ marginTop: SPACING.md }}
+            onPress={() => navigation.navigate('Dashboard')}
+          />
+        )}
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('VoiceSettings')}
-          >
-            <Text style={styles.buttonText}>🎙️ Voice Settings</Text>
-          </TouchableOpacity>
+        <StyledButton
+          label="Voice Settings"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          icon="🎙️"
+          style={{ marginTop: SPACING.md }}
+          onPress={() => navigation.navigate('VoiceSettings')}
+        />
+
+        <StyledButton
+          label="Settings"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          icon="⚙️"
+          style={{ marginTop: SPACING.md }}
+          onPress={() => navigation.navigate('Settings')}
+        />
+
+        {/* Fuel Strategy Button */}
+        <StyledButton
+          label="Fuel Strategy"
+          variant="secondary"
+          size="lg"
+          fullWidth
+          icon="⛽"
+          style={{ marginTop: SPACING.md, marginBottom: SPACING.xxxl }}
+          onPress={() => navigation.navigate('FuelStrategy')}
+        />
+
+        {/* Footer Info */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>v1.0.0 • Professional Simracing Platform</Text>
         </View>
       </ScrollView>
     </View>
@@ -205,150 +271,92 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#000000',
+    ...COMMON_STYLES.screenContainer,
   },
 
   scrollView: {
-    flex: 1,
+    ...COMMON_STYLES.scrollView,
   },
 
   scrollContent: {
-    padding: 16,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xl,
   },
 
-  header: {
+  // Premium Header
+  premiumHeader: {
     alignItems: 'center',
-    marginBottom: 24,
-    paddingTop: 16,
+    marginBottom: SPACING.xxxl,
+    paddingVertical: SPACING.xl,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.border.primary,
   },
 
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 4,
+  mainTitle: {
+    ...TYPOGRAPHY.heading.h1,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.sm,
   },
 
-  subtitle: {
+  mainSubtitle: {
     fontSize: 14,
-    color: '#AAAAAA',
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
+    letterSpacing: 0.5,
   },
 
-  section: {
-    marginBottom: 20,
+  headerDivider: {
+    width: 60,
+    height: 2,
+    backgroundColor: COLORS.accent.cyan,
+    marginTop: SPACING.lg,
+    borderRadius: 1,
   },
 
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#CCCCCC',
-    marginBottom: 12,
-  },
-
-  statusItem: {
-    backgroundColor: '#111111',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-
-  statusLabel: {
-    color: '#888888',
-    fontSize: 12,
-    marginBottom: 4,
-  },
-
-  statusValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  statusConnected: {
-    color: '#00FF00',
-  },
-
-  statusDisconnected: {
-    color: '#FF4444',
-  },
-
-  statusRecording: {
-    color: '#FF0000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-
-  statusIdle: {
-    color: '#AAAAAA',
-    fontSize: 14,
-  },
-
-  sessionInfo: {
-    color: '#CCCCCC',
-    fontSize: 12,
-    marginTop: 4,
-  },
-
-  telemRow: {
+  // Status Grid
+  statusGrid: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    gap: SPACING.md,
+    marginBottom: SPACING.xl,
   },
 
-  telemCell: {
-    flex: 1,
-    backgroundColor: '#111111',
-    borderRadius: 6,
-    padding: 10,
-    alignItems: 'center',
-  },
-
-  telemLabel: {
-    color: '#888888',
-    fontSize: 11,
-    marginBottom: 4,
-  },
-
-  telemValue: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-
-  errorSection: {
-    backgroundColor: '#330000',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF0000',
-    padding: 12,
-    marginBottom: 20,
-  },
-
-  errorTitle: {
-    color: '#FF4444',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-
-  errorMessage: {
-    color: '#FFAAAA',
+  statusCardLabel: {
     fontSize: 12,
+    fontWeight: 'bold' as const,
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: SPACING.md,
   },
 
-  button: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 10,
+  sessionDetailText: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    fontWeight: '500' as const,
+  },
+
+  // Metrics Grid
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.md,
+    width: '100%',
+  },
+
+  // Footer
+  footer: {
     alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.primary,
+    marginTop: SPACING.xxl,
   },
 
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
+  footerText: {
+    fontSize: 11,
+    color: COLORS.text.tertiary,
+    letterSpacing: 0.5,
+    fontWeight: '500' as const,
   },
 });
 

@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../utils/theme';
 
 interface LapTimeDisplayProps {
   lapTime: number; // milliseconds
@@ -58,7 +59,7 @@ export const LapTimeDisplay: React.FC<LapTimeDisplayProps> = ({
 
         <View style={styles.comparisonSection}>
           <Text style={styles.smallLabel}>BEST LAP</Text>
-          <Text style={[styles.smallTime, { color: '#00FF00' }]}>{bestLapDisplay}</Text>
+          <Text style={[styles.smallTime, { color: COLORS.status.success }]}>{bestLapDisplay}</Text>
         </View>
       </View>
     </View>
@@ -68,29 +69,29 @@ export const LapTimeDisplay: React.FC<LapTimeDisplayProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.backgrounds.primary,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: COLORS.borders.accent,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     justifyContent: 'space-between',
   },
 
   currentSection: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: SPACING.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   currentTime: {
-    color: '#FFFFFF',
+    color: COLORS.text.primary,
     fontSize: 24,
     fontWeight: 'bold',
     fontFamily: 'monospace',
@@ -110,19 +111,18 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 30,
-    backgroundColor: '#333333',
-    marginHorizontal: 8,
+    backgroundColor: COLORS.borders.default,
+    marginHorizontal: SPACING.sm,
   },
 
   smallLabel: {
-    color: '#666666',
+    color: COLORS.text.tertiary,
     fontSize: 8,
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginBottom: SPACING.xs,
   },
 
   smallTime: {
-    color: '#CCCCCC',
     fontSize: 12,
     fontWeight: 'bold',
     fontFamily: 'monospace',

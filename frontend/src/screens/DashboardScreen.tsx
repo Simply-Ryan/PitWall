@@ -10,6 +10,7 @@ import React from 'react';
 import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { Dashboard } from '@components/Dashboard';
 import { RootNavigationProp } from '../App';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS, ANIMATION } from '../utils/theme';
 
 /**
  * Dashboard Screen - Displays the Smart Dashboard HUD
@@ -19,70 +20,101 @@ export const DashboardScreen: React.FC<{ navigation?: RootNavigationProp }> = ({
     <View style={styles.container}>
       <Dashboard />
       
-      {/* Quick Access Buttons */}
+      {/* Quick Access Bar */}
       <View style={styles.quickAccessBar}>
-        <Pressable
-          style={styles.quickAccessButton}
+        <PressableButton
+          icon="⛽"
+          label="FUEL"
           onPress={() => navigation?.navigate('FuelStrategy')}
-        >
-          <Text style={styles.quickAccessButtonText}>⛽ FUEL</Text>
-        </Pressable>
+        />
         
-        <Pressable
-          style={styles.quickAccessButton}
+        <PressableButton
+          icon="🎙️"
+          label="VOICE"
           onPress={() => navigation?.navigate('VoiceSettings')}
-        >
-          <Text style={styles.quickAccessButtonText}>🎙️ VOICE</Text>
-        </Pressable>
+        />
         
-        <Pressable
-          style={styles.quickAccessButton}
+        <PressableButton
+          icon="🏠"
+          label="HOME"
           onPress={() => navigation?.navigate('Home')}
-        >
-          <Text style={styles.quickAccessButtonText}>🏠 HOME</Text>
-        </Pressable>
+        />
       </View>
     </View>
+  );
+};
+
+/**
+ * Quick Access Button Component
+ */
+interface PressableButtonProps {
+  icon: string;
+  label: string;
+  onPress: () => void;
+}
+
+const PressableButton: React.FC<PressableButtonProps> = ({ icon, label, onPress }) => {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.quickAccessButton, pressed && styles.quickAccessButtonPressed]}
+      onPress={onPress}
+    >
+      <Text style={styles.quickAccessButtonIcon}>{icon}</Text>
+      <Text style={styles.quickAccessButtonText}>{label}</Text>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background.primary,
   },
   
   quickAccessBar: {
     position: 'absolute',
-    bottom: 16,
-    left: 16,
-    right: 16,
+    bottom: SPACING.lg,
+    left: SPACING.lg,
+    right: SPACING.lg,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(17, 17, 17, 0.95)',
+    backgroundColor: COLORS.background.secondary,
     borderTopWidth: 2,
-    borderTopColor: '#333333',
-    borderRadius: 8,
-    paddingVertical: 10,
-    gap: 8,
+    borderTopColor: COLORS.accent.cyan,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
+    ...SHADOWS.lg,
   },
   
   quickAccessButton: {
     flex: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#1a1a2e',
-    borderRadius: 6,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.background.surface,
+    borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
-    borderColor: '#444444',
+    borderColor: COLORS.border.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  
+  quickAccessButtonPressed: {
+    backgroundColor: COLORS.background.tertiary,
+    borderColor: COLORS.accent.cyan,
+    ...SHADOWS.md,
+  },
+  
+  quickAccessButtonIcon: {
+    fontSize: 18,
   },
   
   quickAccessButtonText: {
-    color: '#00FF00',
-    fontSize: 11,
-    fontWeight: 'bold',
+    color: COLORS.accent.cyan,
+    fontSize: 10,
+    fontWeight: 'bold' as const,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
 });

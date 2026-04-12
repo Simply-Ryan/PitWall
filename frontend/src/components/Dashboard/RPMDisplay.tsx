@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/theme';
 
 interface RPMDisplayProps {
   rpm: number;
@@ -18,9 +19,9 @@ export const RPMDisplay: React.FC<RPMDisplayProps> = ({ rpm, maxRPM }) => {
 
   // Determine color based on RPM percentage
   const barColor = useMemo(() => {
-    if (rpmPercent < 50) return '#00FF00'; // Green
-    if (rpmPercent < 80) return '#FFFF00'; // Yellow
-    return '#FF0000'; // Red (redline zone)
+    if (rpmPercent < 50) return COLORS.status.success;
+    if (rpmPercent < 80) return COLORS.status.warning;
+    return COLORS.status.danger;
   }, [rpmPercent]);
 
   const displayRPM = useMemo(() => Math.round(rpm), [rpm]);
@@ -46,33 +47,34 @@ export const RPMDisplay: React.FC<RPMDisplayProps> = ({ rpm, maxRPM }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.background.surface,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: COLORS.border.primary,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     justifyContent: 'center',
+    ...SHADOWS.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
 
   barContainer: {
     height: 16,
-    backgroundColor: '#222222',
-    borderRadius: 4,
+    backgroundColor: COLORS.background.tertiary,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
 
   barFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   valueRow: {
@@ -83,11 +85,11 @@ const styles = StyleSheet.create({
 
   value: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
   },
 
   maxRPM: {
-    color: '#666666',
+    color: COLORS.text.tertiary,
     fontSize: 10,
   },
 });

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Provider } from 'react-redux';
 import { store } from '@redux/store';
-import { HomeScreen, DashboardScreen, VoiceSettingsScreen, FuelStrategyScreen } from '@screens';
+import { HomeScreen, DashboardScreen, SettingsScreen, VoiceSettingsScreen, FuelStrategyScreen, RaceStrategyInputScreen, RaceStrategyScreen } from '@screens';
 
 /**
  * Navigation stack parameter list
@@ -13,8 +13,11 @@ import { HomeScreen, DashboardScreen, VoiceSettingsScreen, FuelStrategyScreen } 
 export type RootStackParamList = {
   Home: undefined;
   Dashboard: undefined;
+  Settings: undefined;
   VoiceSettings: undefined;
   FuelStrategy: undefined;
+  RaceStrategy: undefined;
+  StrategyResult: undefined;
 };
 
 /**
@@ -58,6 +61,11 @@ export const App: React.FC = () => {
             options={{ animationEnabled: false }}
           />
           <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{ animationEnabled: false }}
+          />
+          <Stack.Screen
             name="VoiceSettings"
             component={VoiceSettingsScreen}
             options={{ animationEnabled: false }}
@@ -65,6 +73,16 @@ export const App: React.FC = () => {
           <Stack.Screen
             name="FuelStrategy"
             component={FuelStrategyScreen}
+            options={{ animationEnabled: false }}
+          />
+          <Stack.Screen
+            name="RaceStrategy"
+            component={RaceStrategyInputScreen}
+            options={{ animationEnabled: false }}
+          />
+          <Stack.Screen
+            name="StrategyResult"
+            component={RaceStrategyScreen}
             options={{ animationEnabled: false }}
           />
         </Stack.Navigator>

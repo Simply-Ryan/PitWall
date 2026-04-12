@@ -7,7 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && \
+RUN rm -f package-lock.json && \
+    npm install && \
     npm install -g typescript
 
 # Copy source code
@@ -31,7 +32,8 @@ RUN apk add --no-cache dumb-init
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN rm -f package-lock.json && \
+    npm install --omit=dev
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist

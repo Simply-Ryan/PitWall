@@ -4,6 +4,7 @@ import telemetryReducer from './slices/telemetrySlice';
 import sessionReducer from './slices/sessionSlice';
 import uiReducer from './slices/uiSlice';
 import fuelStrategyReducer from './slices/fuelStrategySlice';
+import strategyReducer from './slices/strategySlice';
 
 /**
  * Redux store configuration
@@ -17,6 +18,7 @@ export const store = configureStore({
     session: sessionReducer,
     ui: uiReducer,
     fuelStrategy: fuelStrategyReducer,
+    strategy: strategyReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

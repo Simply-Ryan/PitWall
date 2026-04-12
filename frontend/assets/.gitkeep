@@ -1,0 +1,16 @@
+# Placeholder Assets
+
+This folder contains placeholder images for the Expo app. The `generate-assets.js` script in the parent directory will create these automatically when `npm install` is run via the `postinstall` hook.
+
+If assets are missing, run:
+```bash
+node ../generate-assets.js
+```
+
+## Files needed:
+- `icon.png` - App icon
+- `splash.png` - Splash screen
+- `adaptive-icon.png` - Android adaptive icon
+- `favicon.png` - Web favicon
+
+All are generated as minimal 1x1 transparent PNG files for development purposes.

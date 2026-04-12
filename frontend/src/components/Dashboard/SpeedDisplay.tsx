@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/theme';
 
 interface SpeedDisplayProps {
   speed: number;
@@ -17,10 +18,10 @@ export const SpeedDisplay: React.FC<SpeedDisplayProps> = ({ speed }) => {
 
   // Determine color based on speed thresholds
   const speedColor = useMemo(() => {
-    if (speed < 10) return '#666666'; // Gray when stationary
-    if (speed < 100) return '#FFFF00'; // Yellow for normal speeds
-    if (speed < 180) return '#00FF00'; // Green for high speeds
-    return '#FF0000'; // Red for very high speeds
+    if (speed < 10) return COLORS.text.tertiary;
+    if (speed < 100) return COLORS.status.warning;
+    if (speed < 180) return COLORS.status.success;
+    return COLORS.status.danger;
   }, [speed]);
 
   return (
@@ -37,20 +38,21 @@ export const SpeedDisplay: React.FC<SpeedDisplayProps> = ({ speed }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.background.surface,
     borderWidth: 2,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   valueContainer: {
@@ -61,13 +63,13 @@ const styles = StyleSheet.create({
 
   value: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginRight: 4,
+    fontWeight: 'bold' as const,
+    marginRight: SPACING.xs,
   },
 
   unit: {
-    color: '#CCCCCC',
+    color: COLORS.text.secondary,
     fontSize: 10,
-    marginTop: 4,
+    marginTop: SPACING.xs,
   },
 });

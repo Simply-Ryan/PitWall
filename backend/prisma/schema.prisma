@@ -22,6 +22,7 @@ model User {
   sessions  Session[]
   laps      Lap[]
   leaderboardEntries LeaderboardEntry[]
+  strategyTemplates  StrategyTemplate[]
   
   @@map("users")
 }
@@ -44,6 +45,7 @@ model Session {
   
   telemetry       Telemetry[]
   laps            Lap[]
+  strategies      RaceStrategy[]
   
   @@index([userId])
   @@index([track])
@@ -175,4 +177,80 @@ model SessionStatistics {
   updatedAt       DateTime   @updatedAt
   
   @@map("session_statistics")
+}
+
+// Race Strategy - main strategy record
+model RaceStrategy {
+  id              String     @id @default(cuid())
+  sessionId       String
+  session         Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Store full input/output as JSON
+  strategyInput   Json       // StrategyInput object
+  strategyOutput  Json       // StrategyOutput object
+  
+  activeScenario  String     @default("likely") // 'best' | 'likely' | 'worst'
+  status          String     @default("planning") // 'planning' | 'active' | 'executed' | 'completed'
+  
+  // Quick access fields
+  raceType        String     // 'lap-based' | 'time-based' | 'distance-based'
+  trackName       String
+  simulator       String
+  totalLaps       Int?
+  totalMinutes    Int?
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  completedAt     DateTime?
+  
+  adjustments     StrategyAdjustment[]
+  
+  @@index([sessionId])
+  @@index([trackName])
+  @@index([status])
+  @@index([createdAt])
+  @@map("race_strategies")
+}
+
+// Strategy Adjustments - logged during race
+model StrategyAdjustment {
+  id              String     @id @default(cuid())
+  strategyId      String
+  strategy        RaceStrategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  
+  lap             Int
+  fuelUsedThisLap Float      // liters
+  fuelUsedVsForecast Float   // delta in liters
+  tireWearPercent Float
+  lapTimeMs       Int
+  
+  adjustmentReason String    // 'consumption_higher' | 'consumption_lower' | etc.
+  newPitLapRecommendation Int?
+  
+  createdAt       DateTime   @default(now())
+  
+  @@index([strategyId])
+  @@index([lap])
+  @@map("strategy_adjustments")
+}
+
+// Strategy Templates - saved for reuse
+model StrategyTemplate {
+  id              String     @id @default(cuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name            String     // e.g., "Spa Sprint - Soft Tires"
+  trackName       String
+  simulator       String
+  raceType        String
+  
+  defaultSettings Json       // Default vehicle specs, weather, pit duration, etc.
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@index([userId])
+  @@index([trackName])
+  @@map("strategy_templates")
 }

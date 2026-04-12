@@ -57,12 +57,12 @@ export function useVoice(): UseVoiceReturn {
    * Monitor telemetry and generate callouts
    */
   useEffect(() => {
-    if (!voiceSettings.enabled || !telemetry) {
+    if (!voiceSettings.enabled || !telemetry?.data) {
       return;
     }
 
     // Generate callouts based on current telemetry
-    const callouts = CalloutManager.generateCallouts(telemetry);
+    const callouts = CalloutManager.generateCallouts(telemetry.data);
 
     // Queue each callout
     callouts.forEach((callout) => {

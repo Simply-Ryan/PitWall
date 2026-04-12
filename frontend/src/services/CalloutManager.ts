@@ -71,8 +71,14 @@ class CalloutManager {
    */
   private generateRPMCallouts(telemetry: TelemetrySnapshot): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const rpm = telemetry.vehicleData.rpm || 0;
-    const maxRPM = telemetry.vehicleData.maxRPM || 8000;
+    
+    // Guard against undefined vehicle data
+    if (!telemetry.vehicle) {
+      return callouts;
+    }
+    
+    const rpm = telemetry.vehicle.rpm || 0;
+    const maxRPM = telemetry.vehicle.maxRPM || 8000;
 
     // Redline warning (>90% RPM)
     if (rpm / maxRPM > 0.9) {
@@ -95,8 +101,14 @@ class CalloutManager {
    */
   private generateGearCallouts(telemetry: TelemetrySnapshot): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const currentGear = telemetry.vehicleData.gear || 'N';
-    const previousGear = this.previousState.vehicleData?.gear || 'N';
+    
+    // Guard against undefined vehicle data
+    if (!telemetry.vehicle) {
+      return callouts;
+    }
+    
+    const currentGear = String(telemetry.vehicle.gear || 'N');
+    const previousGear = String(this.previousState.vehicle?.gear || 'N');
 
     if (currentGear === previousGear) {
       return callouts;
@@ -139,20 +151,28 @@ class CalloutManager {
    */
   private generateTireCallouts(telemetry: TelemetrySnapshot): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const tires = telemetry.vehicleData.tireTemperature;
+    
+    // Guard against undefined tires
+    if (!telemetry.tires) {
+      return callouts;
+    }
+    
+    const tires = telemetry.tires;
 
-    if (!tires) return callouts;
+    // Check each tire position
+    Object.entries(tires).forEach(([position, tireData]) => {
+      if (!tireData || !tireData.temperature) return;
 
-    // Check each tire
-    Object.entries(tires).forEach(([position, temp]) => {
-      if (!temp) return;
+      const temp = Array.isArray(tireData.temperature) 
+        ? tireData.temperature[1] // middle temperature
+        : (tireData.temperature as unknown as Record<string, number>)?.middle || 80;
 
       const optimalTemp = 85; // Celsius
       const coldThreshold = 60;
       const hotThreshold = 110;
 
       // Cold tire warning
-      if (temp.middle < coldThreshold) {
+      if (temp < coldThreshold) {
         const callout = this.createCallout(
           VoiceNotificationType.TIRE_COLD,
           `${position} tire is cold`,
@@ -165,7 +185,7 @@ class CalloutManager {
       }
 
       // Hot tire warning
-      if (temp.middle > hotThreshold) {
+      if (temp > hotThreshold) {
         const callout = this.createCallout(
           VoiceNotificationType.TIRE_HOT,
           `${position} tire overheating`,
@@ -186,12 +206,18 @@ class CalloutManager {
    */
   private generateFuelCallouts(telemetry: TelemetrySnapshot): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const fuel = telemetry.vehicleData.fuelLevel || 0;
-    const fuelCapacity = telemetry.vehicleData.fuelCapacity || 90;
+    
+    // Guard against undefined fuel data
+    if (!telemetry.fuel) {
+      return callouts;
+    }
+    
+    const fuel = telemetry.fuel.level || 0;
+    const fuelCapacity = telemetry.fuel.capacity || 90;
     const fuelPercent = (fuel / fuelCapacity) * 100;
 
     // Low fuel warning (20%)
-    if (fuelPercent <= 20 && (this.previousState.vehicleData?.fuelLevel || 0) > 20) {
+    if (fuelPercent <= 20 && ((this.previousState.fuel?.level) || 0) > 20) {
       const callout = this.createCallout(
         VoiceNotificationType.LOW_FUEL,
         `Low fuel, ${Math.round(fuel)} liters remaining`,
@@ -204,7 +230,7 @@ class CalloutManager {
     }
 
     // Critical fuel warning (5%)
-    if (fuelPercent <= 5 && (this.previousState.vehicleData?.fuelLevel || 0) > 5) {
+    if (fuelPercent <= 5 && ((this.previousState.fuel?.level) || 0) > 5) {
       const callout = this.createCallout(
         VoiceNotificationType.FUEL_CRITICAL,
         'Critical fuel, pit immediately',
@@ -226,14 +252,19 @@ class CalloutManager {
     telemetry: TelemetrySnapshot,
   ): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const currentLapTime = telemetry.lapData.currentLapTime || 0;
-    const bestLapTime = telemetry.lapData.bestLapTime || Infinity;
+    
+    // Guard against undefined performance data
+    if (!telemetry.performance) {
+      return callouts;
+    }
+    
+    const deltaToLap = telemetry.performance.deltaToLap || 0;
 
-    // New personal best
-    if (currentLapTime > 0 && currentLapTime < bestLapTime) {
+    // Significant improvement detection
+    if (deltaToLap < -1000) { // More than 1 second faster
       const callout = this.createCallout(
         VoiceNotificationType.NEW_PERSONAL_BEST,
-        'New personal best lap time',
+        'New personal best pace',
         'high',
         telemetry,
       );
@@ -250,12 +281,18 @@ class CalloutManager {
    */
   private generateDrivingCallouts(telemetry: TelemetrySnapshot): VoiceNotification[] {
     const callouts: VoiceNotification[] = [];
-    const throttle = telemetry.vehicleData.throttle || 0;
-    const brake = telemetry.vehicleData.brake || 0;
+    
+    // Guard against undefined vehicle data
+    if (!telemetry.vehicle) {
+      return callouts;
+    }
+    
+    const throttle = telemetry.vehicle.controls?.throttle || 0;
+    const brake = telemetry.vehicle.controls?.brake || 0;
 
     // Heavy braking detection
     if (brake > 0.8) {
-      const prevBrake = this.previousState.vehicleData?.brake || 0;
+      const prevBrake = this.previousState.vehicle?.controls?.brake || 0;
       if (prevBrake <= 0.8) {
         const callout = this.createCallout(
           VoiceNotificationType.BRAKE_HARD,
@@ -299,11 +336,11 @@ class CalloutManager {
       priority,
       spoken: false,
       context: {
-        speed: context.vehicleData.speed,
-        rpm: context.vehicleData.rpm,
-        gear: context.vehicleData.gear,
-        fuelLevel: context.vehicleData.fuelLevel,
-        lapTime: context.lapData.currentLapTime,
+        speed: context.vehicle?.speed || 0,
+        rpm: context.vehicle?.rpm || 0,
+        gear: context.vehicle?.gear || 0,
+        fuelLevel: context.fuel?.level || 0,
+        lapTime: context.lap?.lapTime || 0,
       },
     };
   }

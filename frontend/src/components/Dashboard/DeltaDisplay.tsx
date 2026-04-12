@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../utils/theme';
 
 interface DeltaDisplayProps {
   delta: number; // milliseconds (positive = slower, negative = faster)
@@ -30,14 +31,14 @@ export const DeltaDisplay: React.FC<DeltaDisplayProps> = ({ delta, lapNumber, is
   const { deltaText, deltaColor } = useMemo(() => {
     if (Math.abs(delta) < 10) {
       // Very close to best
-      return { deltaText: formatDelta(delta), deltaColor: '#FFFFFF' };
+      return { deltaText: formatDelta(delta), deltaColor: COLORS.text.primary };
     }
     if (delta < 0) {
       // Faster than best
-      return { deltaText: formatDelta(delta), deltaColor: '#00FF00' };
+      return { deltaText: formatDelta(delta), deltaColor: COLORS.status.success };
     }
     // Slower than best
-    return { deltaText: formatDelta(delta), deltaColor: '#FF4444' };
+    return { deltaText: formatDelta(delta), deltaColor: COLORS.status.danger };
   }, [delta]);
 
   const lapStatus = useMemo(() => {
@@ -63,11 +64,11 @@ export const DeltaDisplay: React.FC<DeltaDisplayProps> = ({ delta, lapNumber, is
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.backgrounds.primary,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: COLORS.borders.accent,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
     justifyContent: 'space-between',
   },
 
@@ -75,18 +76,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 1,
   },
 
   lapNumber: {
-    color: '#CCCCCC',
+    color: COLORS.text.primary,
     fontSize: 12,
     fontWeight: 'bold',
   },
@@ -98,6 +99,17 @@ const styles = StyleSheet.create({
   deltaValue: {
     fontSize: 18,
     fontWeight: 'bold',
+    marginBottom: SPACING.sm,
+    fontFamily: 'monospace',
+  },
+
+  status: {
+    color: COLORS.text.secondary,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+});
     marginVertical: 6,
     fontFamily: 'monospace',
   },

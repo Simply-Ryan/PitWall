@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../utils/theme';
 
 interface ThrottleDisplayProps {
   throttle: number; // 0-1
@@ -25,9 +26,9 @@ export const ThrottleDisplay: React.FC<ThrottleDisplayProps> = ({ throttle, brak
         <View style={styles.controlColumn}>
           <Text style={styles.controlLabel}>THROTTLE</Text>
           <View style={styles.barContainer}>
-            <View style={[styles.barFill, { width: `${throttlePercent}%`, backgroundColor: '#00FF00' }]} />
+            <View style={[styles.barFill, { width: `${throttlePercent}%`, backgroundColor: COLORS.status.success }]} />
           </View>
-          <Text style={[styles.controlValue, { color: '#00FF00' }]}>
+          <Text style={[styles.controlValue, { color: COLORS.status.success }]}>
             {Math.round(throttlePercent)}%
           </Text>
         </View>
@@ -36,9 +37,9 @@ export const ThrottleDisplay: React.FC<ThrottleDisplayProps> = ({ throttle, brak
         <View style={styles.controlColumn}>
           <Text style={styles.controlLabel}>BRAKE</Text>
           <View style={styles.barContainer}>
-            <View style={[styles.barFill, { width: `${brakePercent}%`, backgroundColor: '#FF4444' }]} />
+            <View style={[styles.barFill, { width: `${brakePercent}%`, backgroundColor: COLORS.status.danger }]} />
           </View>
-          <Text style={[styles.controlValue, { color: '#FF4444' }]}>
+          <Text style={[styles.controlValue, { color: COLORS.status.danger }]}>
             {Math.round(brakePercent)}%
           </Text>
         </View>
@@ -49,24 +50,24 @@ export const ThrottleDisplay: React.FC<ThrottleDisplayProps> = ({ throttle, brak
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.backgrounds.primary,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: COLORS.borders.accent,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 1,
-    marginBottom: 10,
+    marginBottom: SPACING.md,
   },
 
   controlsRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: SPACING.lg,
   },
 
   controlColumn: {
@@ -74,23 +75,23 @@ const styles = StyleSheet.create({
   },
 
   controlLabel: {
-    color: '#AAAAAA',
+    color: COLORS.text.secondary,
     fontSize: 11,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
 
   barContainer: {
     height: 24,
-    backgroundColor: '#222222',
-    borderRadius: 4,
+    backgroundColor: COLORS.backgrounds.secondary,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
 
   barFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   controlValue: {

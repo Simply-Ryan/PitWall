@@ -26,6 +26,7 @@ import { DeltaDisplay } from './DeltaDisplay';
 import { TireTemperatureDisplay } from './TireTemperatureDisplay';
 import { FuelDisplay } from './FuelDisplay';
 import { LapTimeDisplay } from './LapTimeDisplay';
+import { COLORS, SPACING, BORDER_RADIUS, COMMON_STYLES } from '../../utils/theme';
 
 /**
  * Smart Dashboard HUD component
@@ -119,8 +120,8 @@ export const Dashboard: React.FC = () => {
 const styles = StyleSheet.create({
   fullContainer: {
     flex: 1,
-    backgroundColor: '#000000',
-    padding: 12,
+    backgroundColor: COLORS.background.primary,
+    padding: SPACING.md,
     justifyContent: 'space-between',
   },
 
@@ -128,59 +129,66 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    gap: 10,
+    marginBottom: SPACING.lg,
+    gap: SPACING.md,
+    flexWrap: 'wrap',
   },
 
   controlsRow: {
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
 
   lapDataRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 10,
+    marginBottom: SPACING.lg,
+    gap: SPACING.md,
+    flexWrap: 'wrap',
   },
 
   tiresRow: {
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
 
   fuelRow: {
-    marginBottom: 8,
+    marginBottom: SPACING.md,
   },
 
   connectionIndicator: {
-    backgroundColor: '#00AA00',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: COLORS.status.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.accent.cyan,
   },
 
   connectionText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    fontSize: 11,
+    fontWeight: 'bold' as const,
+    letterSpacing: 0.5,
   },
 
   voiceIndicator: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: COLORS.accent.teal,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.accent.cyan,
   },
 
   voiceSpeaking: {
-    backgroundColor: '#FF9800',
-    borderWidth: 1,
-    borderColor: '#FFFF00',
+    backgroundColor: COLORS.accent.orange,
+    borderColor: COLORS.status.warning,
   },
 
   voiceText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    fontSize: 11,
+    fontWeight: 'bold' as const,
+    letterSpacing: 0.5,
   },
 
   placeholder: {
@@ -190,14 +198,14 @@ const styles = StyleSheet.create({
   },
 
   placeholderText: {
-    color: '#CCCCCC',
-    fontSize: 18,
-    marginBottom: 12,
+    color: COLORS.text.secondary,
+    fontSize: 16,
+    marginBottom: SPACING.lg,
   },
 
   errorText: {
-    color: '#FF4444',
-    fontSize: 14,
-    marginTop: 8,
+    color: COLORS.status.danger,
+    fontSize: 13,
+    marginTop: SPACING.md,
   },
 });

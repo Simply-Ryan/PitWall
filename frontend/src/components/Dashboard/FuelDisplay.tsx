@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/theme';
 
 interface FuelDisplayProps {
   fuelLevel: number; // liters
@@ -21,9 +22,9 @@ export const FuelDisplay: React.FC<FuelDisplayProps> = ({
   const fuelPercent = useMemo(() => (fuelLevel / fuelCapacity) * 100, [fuelLevel, fuelCapacity]);
 
   const fuelColor = useMemo(() => {
-    if (fuelPercent > 50) return '#00FF00'; // Green
-    if (fuelPercent > 20) return '#FFFF00'; // Yellow
-    return '#FF4444'; // Red - low fuel
+    if (fuelPercent > 50) return COLORS.status.success; // Green
+    if (fuelPercent > 20) return COLORS.status.warning; // Yellow
+    return COLORS.status.danger; // Red - low fuel
   }, [fuelPercent]);
 
   const displayLevel = useMemo(() => fuelLevel.toFixed(1), [fuelLevel]);
@@ -62,41 +63,59 @@ export const FuelDisplay: React.FC<FuelDisplayProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.backgrounds.primary,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 10,
+    borderColor: COLORS.borders.accent,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
 
   header: {
-    marginBottom: 10,
+    marginBottom: SPACING.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: SPACING.sm,
   },
 
   fuelBarContainer: {
     height: 12,
-    backgroundColor: '#222222',
-    borderRadius: 4,
+    backgroundColor: COLORS.backgrounds.secondary,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
   },
 
   fuelBar: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: BORDER_RADIUS.sm,
   },
 
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
+
+  infoSection: {
+    alignItems: 'center',
+  },
+
+  infoLabel: {
+    color: COLORS.text.secondary,
+    fontSize: 8,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    marginBottom: SPACING.xs,
+  },
+
+  infoValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+});
 
   infoSection: {
     alignItems: 'center',

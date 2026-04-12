@@ -9,6 +9,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '../../utils/theme';
 import type { TireData } from '@types/telemetry';
 
 interface TireTemperatureDisplayProps {
@@ -20,9 +21,9 @@ interface TireTemperatureDisplayProps {
  * Green: optimal (80-100°C), Yellow: warm (50-80°C), Red: hot (>100°C or <50°C)
  */
 function getTemperatureColor(temp: number): string {
-  if (temp < 50 || temp > 120) return '#FF4444';
-  if (temp < 70 || temp > 100) return '#FFFF00';
-  return '#00FF00';
+  if (temp < 50 || temp > 120) return COLORS.status.danger;
+  if (temp < 70 || temp > 100) return COLORS.status.warning;
+  return COLORS.status.success;
 }
 
 /**
@@ -94,77 +95,77 @@ export const TireTemperatureDisplay: React.FC<TireTemperatureDisplayProps> = ({ 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.backgrounds.primary,
     borderWidth: 2,
-    borderColor: '#444444',
-    borderRadius: 8,
-    padding: 12,
+    borderColor: COLORS.borders.accent,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 9,
     fontWeight: 'bold',
     letterSpacing: 1,
-    marginBottom: 10,
+    marginBottom: SPACING.md,
   },
 
   tiresGrid: {
-    gap: 8,
+    gap: SPACING.sm,
   },
 
   row: {
     flexDirection: 'row',
-    gap: 8,
+    gap: SPACING.sm,
   },
 
   tireCell: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: COLORS.backgrounds.secondary,
     borderWidth: 1,
-    borderColor: '#333333',
-    borderRadius: 6,
-    padding: 8,
+    borderColor: COLORS.borders.default,
+    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.sm,
     alignItems: 'center',
   },
 
   tireLabel: {
-    color: '#AAAAAA',
+    color: COLORS.text.secondary,
     fontSize: 11,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   tireTemp: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   wearContainer: {
     width: '100%',
     height: 6,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 3,
+    backgroundColor: COLORS.backgrounds.tertiary,
+    borderRadius: BORDER_RADIUS.xs,
     overflow: 'hidden',
-    marginBottom: 2,
+    marginBottom: SPACING.xs,
   },
 
   wearBar: {
     height: '100%',
-    backgroundColor: '#FF6600',
-    borderRadius: 3,
+    backgroundColor: COLORS.accents.warning,
+    borderRadius: BORDER_RADIUS.xs,
   },
 
   wearText: {
-    color: '#666666',
+    color: COLORS.text.tertiary,
     fontSize: 9,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   tempBreakdown: {
     flexDirection: 'row',
-    gap: 4,
+    gap: SPACING.xs,
     justifyContent: 'space-around',
     width: '100%',
   },
@@ -175,12 +176,12 @@ const styles = StyleSheet.create({
   },
 
   legend: {
-    marginTop: 8,
+    marginTop: SPACING.sm,
     alignItems: 'center',
   },
 
   legendText: {
-    color: '#666666',
+    color: COLORS.text.tertiary,
     fontSize: 8,
   },
 });

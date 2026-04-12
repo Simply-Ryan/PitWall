@@ -6,6 +6,7 @@
 
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../utils/theme';
 
 interface GearDisplayProps {
   gear: number;
@@ -15,12 +16,12 @@ export const GearDisplay: React.FC<GearDisplayProps> = ({ gear }) => {
   // Determine gear display and color
   const { gearText, gearColor } = useMemo(() => {
     if (gear === 0) {
-      return { gearText: 'N', gearColor: '#FF0000' }; // Red for Neutral
+      return { gearText: 'N', gearColor: COLORS.status.warning };
     }
     if (gear === -1) {
-      return { gearText: 'R', gearColor: '#0088FF' }; // Blue for Reverse
+      return { gearText: 'R', gearColor: COLORS.accent.teal };
     }
-    return { gearText: String(gear), gearColor: '#00FF00' }; // Green for forward gears
+    return { gearText: String(gear), gearColor: COLORS.status.success };
   }, [gear]);
 
   return (
@@ -33,26 +34,27 @@ export const GearDisplay: React.FC<GearDisplayProps> = ({ gear }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.background.surface,
     borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: BORDER_RADIUS.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     justifyContent: 'center',
     alignItems: 'center',
     minWidth: 70,
+    ...SHADOWS.md,
   },
 
   label: {
-    color: '#888888',
+    color: COLORS.text.secondary,
     fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
 
   gear: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
   },
 });
